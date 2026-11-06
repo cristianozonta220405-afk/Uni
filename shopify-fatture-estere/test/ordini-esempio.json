@@ -1,0 +1,97 @@
+[
+  {
+    "id": "gid://shopify/Order/1001",
+    "name": "#1001",
+    "createdAt": "2026-11-05T10:12:00Z",
+    "email": "john.smith@example.com",
+    "phone": null,
+    "tags": [],
+    "customer": { "firstName": "John", "lastName": "Smith", "email": "john.smith@example.com", "phone": "+1 212 555 0100" },
+    "shippingAddress": { "name": "John Smith", "firstName": "John", "lastName": "Smith", "company": null, "address1": "350 Fifth Avenue", "address2": "Apt 21B", "city": "New York", "province": "New York", "provinceCode": "NY", "zip": "10118", "country": "United States", "countryCodeV2": "US", "phone": "+1 212 555 0100" },
+    "billingAddress": { "name": "John Smith", "firstName": "John", "lastName": "Smith", "company": null, "address1": "350 Fifth Avenue", "address2": "Apt 21B", "city": "New York", "province": "New York", "provinceCode": "NY", "zip": "10118", "country": "United States", "countryCodeV2": "US", "phone": null },
+    "currentTotalPriceSet": { "shopMoney": { "amount": "139.00", "currencyCode": "EUR" } },
+    "totalPriceSet": { "shopMoney": { "amount": "139.00", "currencyCode": "EUR" } },
+    "totalShippingPriceSet": { "shopMoney": { "amount": "25.00", "currencyCode": "EUR" } },
+    "lineItems": { "nodes": [
+      {
+        "title": "Cappello Fedora Classico", "variantTitle": "Nero / M", "sku": "FED-NER-M", "quantity": 1, "currentQuantity": 1, "requiresShipping": true,
+        "originalUnitPriceSet": { "shopMoney": { "amount": "79.00", "currencyCode": "EUR" } },
+        "discountedUnitPriceSet": { "shopMoney": { "amount": "79.00", "currencyCode": "EUR" } },
+        "discountedUnitPriceAfterAllDiscountsSet": { "shopMoney": { "amount": "71.10", "currencyCode": "EUR" } },
+        "product": { "composizione": { "value": "100% Lana / 100% Wool felt" }, "descrizioneDoganale": { "value": "Wool felt fedora hat / Cappello in feltro di lana" } },
+        "variant": { "inventoryItem": { "harmonizedSystemCode": "65050010", "countryCodeOfOrigin": "IT", "measurement": { "weight": { "unit": "GRAMS", "value": 180 } } } }
+      },
+      {
+        "title": "Berretto Baseball", "variantTitle": "Beige", "sku": "BB-BEI", "quantity": 2, "currentQuantity": 2, "requiresShipping": true,
+        "originalUnitPriceSet": { "shopMoney": { "amount": "25.00", "currencyCode": "EUR" } },
+        "discountedUnitPriceSet": { "shopMoney": { "amount": "25.00", "currencyCode": "EUR" } },
+        "discountedUnitPriceAfterAllDiscountsSet": { "shopMoney": { "amount": "21.45", "currencyCode": "EUR" } },
+        "product": { "composizione": { "value": "100% Cotone / 100% Cotton" }, "descrizioneDoganale": null },
+        "variant": { "inventoryItem": { "harmonizedSystemCode": null, "countryCodeOfOrigin": null, "measurement": { "weight": { "unit": "KILOGRAMS", "value": 0 } } } }
+      },
+      {
+        "title": "Gift card", "variantTitle": null, "sku": null, "quantity": 1, "currentQuantity": 1, "requiresShipping": false,
+        "originalUnitPriceSet": { "shopMoney": { "amount": "50.00", "currencyCode": "EUR" } },
+        "discountedUnitPriceSet": { "shopMoney": { "amount": "50.00", "currencyCode": "EUR" } },
+        "discountedUnitPriceAfterAllDiscountsSet": { "shopMoney": { "amount": "50.00", "currencyCode": "EUR" } },
+        "product": null, "variant": null
+      }
+    ] }
+  },
+  {
+    "id": "gid://shopify/Order/1002",
+    "name": "#1002",
+    "createdAt": "2026-11-05T11:00:00Z",
+    "email": "anna@example.de", "phone": null, "tags": [],
+    "customer": null,
+    "shippingAddress": { "name": "Anna Müller", "address1": "Hauptstraße 5", "city": "Berlin", "zip": "10115", "country": "Germany", "countryCodeV2": "DE", "phone": "+49 30 1234567" },
+    "billingAddress": null,
+    "currentTotalPriceSet": { "shopMoney": { "amount": "49.00", "currencyCode": "EUR" } },
+    "totalShippingPriceSet": { "shopMoney": { "amount": "0.00", "currencyCode": "EUR" } },
+    "lineItems": { "nodes": [ { "title": "Cappello Panama", "quantity": 1, "currentQuantity": 1, "requiresShipping": true, "originalUnitPriceSet": { "shopMoney": { "amount": "49.00", "currencyCode": "EUR" } } } ] }
+  },
+  {
+    "id": "gid://shopify/Order/1003",
+    "name": "#1003",
+    "createdAt": "2026-11-05T12:00:00Z",
+    "email": "luis@example.es", "phone": "+34 928 000000", "tags": [],
+    "customer": null,
+    "shippingAddress": { "name": "Luis García", "address1": "Calle Mayor 3", "city": "Las Palmas de Gran Canaria", "province": "Las Palmas", "provinceCode": "GC", "zip": "35001", "country": "Spain", "countryCodeV2": "ES", "phone": null },
+    "billingAddress": null,
+    "currentTotalPriceSet": { "shopMoney": { "amount": "64.00", "currencyCode": "EUR" } },
+    "totalShippingPriceSet": { "shopMoney": { "amount": "15.00", "currencyCode": "EUR" } },
+    "lineItems": { "nodes": [ { "title": "Cappello Panama", "variantTitle": "Naturale / L", "sku": "PAN-NAT-L", "quantity": 1, "currentQuantity": 1, "requiresShipping": true,
+      "originalUnitPriceSet": { "shopMoney": { "amount": "49.00", "currencyCode": "EUR" } },
+      "discountedUnitPriceAfterAllDiscountsSet": { "shopMoney": { "amount": "49.00", "currencyCode": "EUR" } },
+      "product": { "composizione": { "value": "100% Paglia toquilla / 100% Toquilla straw" }, "descrizioneDoganale": { "value": "Plaited straw hat / Cappello di paglia intrecciata" } },
+      "variant": { "inventoryItem": { "harmonizedSystemCode": "650400", "countryCodeOfOrigin": "EC", "measurement": { "weight": { "unit": "GRAMS", "value": 120 } } } } } ] }
+  },
+  {
+    "id": "gid://shopify/Order/1004",
+    "name": "#1004",
+    "createdAt": "2026-11-05T13:00:00Z",
+    "email": "ivan@example.ru", "phone": null, "tags": [],
+    "customer": null,
+    "shippingAddress": { "name": "Ivan Petrov", "address1": "Tverskaya 1", "city": "Moscow", "zip": "125009", "country": "Russia", "countryCodeV2": "RU", "phone": "+7 495 000000" },
+    "billingAddress": null,
+    "currentTotalPriceSet": { "shopMoney": { "amount": "79.00", "currencyCode": "EUR" } },
+    "totalShippingPriceSet": { "shopMoney": { "amount": "0.00", "currencyCode": "EUR" } },
+    "lineItems": { "nodes": [ { "title": "Cappello Fedora", "quantity": 1, "currentQuantity": 1, "requiresShipping": true, "originalUnitPriceSet": { "shopMoney": { "amount": "79.00", "currencyCode": "EUR" } } } ] }
+  },
+  {
+    "id": "gid://shopify/Order/1005",
+    "name": "#1005",
+    "createdAt": "2026-11-05T14:00:00Z",
+    "email": "sophie@example.ch", "phone": null, "tags": [],
+    "customer": null,
+    "shippingAddress": { "name": "Sophie Keller", "company": "Keller Mode GmbH", "address1": "Bahnhofstrasse 10", "city": "Zürich", "zip": "8001", "country": "Switzerland", "countryCodeV2": "CH", "phone": "+41 44 000 00 00" },
+    "billingAddress": null,
+    "currentTotalPriceSet": { "shopMoney": { "amount": "1234.50", "currencyCode": "EUR" } },
+    "totalShippingPriceSet": { "shopMoney": { "amount": "0.00", "currencyCode": "EUR" } },
+    "lineItems": { "nodes": [ { "title": "Coppola Siciliana", "variantTitle": "Grigio / 58", "sku": "COP-GRI-58", "quantity": 30, "currentQuantity": 30, "requiresShipping": true,
+      "originalUnitPriceSet": { "shopMoney": { "amount": "41.15", "currencyCode": "EUR" } },
+      "discountedUnitPriceAfterAllDiscountsSet": { "shopMoney": { "amount": "41.15", "currencyCode": "EUR" } },
+      "product": { "composizione": { "value": "70% Lana, 30% Poliestere / 70% Wool, 30% Polyester" }, "descrizioneDoganale": { "value": "Woven flat cap with peak / Coppola in tessuto con visiera" } },
+      "variant": { "inventoryItem": { "harmonizedSystemCode": "6505.00.30", "countryCodeOfOrigin": "IT", "measurement": { "weight": { "unit": "OUNCES", "value": 4 } } } } } ] }
+  }
+]
