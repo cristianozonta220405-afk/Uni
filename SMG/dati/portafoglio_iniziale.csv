@@ -1,0 +1,21 @@
+ticker,nome,settore,industria,stile,zacks_rank,peso_target,prezzo_acquisto,azioni
+CVX,Chevron Corporation,Energy,Oil & Gas Integrated,Value,,0.0583,217.66,262
+OXY,Occidental Petroleum Corporatio,Energy,Oil & Gas E&P,Value,,0.0819,58.72,1366
+COF,Capital One Financial Corporati,Financial Services,Credit Services,Value,,0.0628,194.1,317
+CVS,CVS Health Corporation,Healthcare,Healthcare Plans,Value,,0.0443,89.94,482
+NUE,Nucor Corporation,Basic Materials,Steel,Value,,0.0427,261.22,160
+C,"Citigroup, Inc.",Financial Services,Banks - Diversified,Value,,0.0292,124.04,230
+TMUS,"T-Mobile US, Inc.",Communication Services,Telecom Services,Value,,0.0205,171.12,117
+MU,"Micron Technology, Inc.",Technology,Semiconductors,Growth,,0.0819,794.38,101
+NVDA,NVIDIA Corporation,Technology,Semiconductors,Growth,,0.0763,164.24,455
+APH,Amphenol Corporation,Technology,Electronic Components,Growth,,0.0721,80.54,877
+PWR,"Quanta Services, Inc.",Industrials,Engineering & Construction,Growth,,0.0805,606.25,130
+UNH,UnitedHealth Group Incorporated,Healthcare,Healthcare Plans,Growth,,0.0338,404.87,81
+BLK,"BlackRock, Inc.",Financial Services,Asset Management,Growth,,0.0247,1221.75,19
+URI,"United Rentals, Inc.",Industrials,Rental & Leasing Services,Growth,,0.0264,1147.72,22
+REGN,"Regeneron Pharmaceuticals, Inc.",Healthcare,Biotechnology,Momentum,,0.0819,952.36,84
+PSX,Phillips 66,Energy,Oil & Gas Refining & Marketing,Momentum,,0.0613,264.78,226
+AMD,"Advanced Micro Devices, Inc.",Technology,Semiconductors,Momentum,,0.0537,586.45,89
+MSFT,Microsoft Corporation,Technology,Software - Infrastructure,Momentum,,0.0244,522.47,45
+DHR,Danaher Corporation,Healthcare,Diagnostics & Research,Momentum,,0.0226,233.24,94
+MET,"MetLife, Inc.",Financial Services,Insurance - Life,Momentum,,0.0205,102.1,196
