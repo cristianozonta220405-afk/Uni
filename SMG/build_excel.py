@@ -47,6 +47,10 @@ ix = wb.active; ix.title = 'Indice'
 title(ix, 'Stock Market Game 2026 - Analisi del portafoglio', f'Gruppo: {GROUP}  |  Corporate Finance & Financial Institutions 2')
 head(ix, 4, 1, ['Foglio', 'Contenuto', 'Sezione istruzioni'])
 SHEETS = [('Portafoglio', 'Composizione del portafoglio iniziale: azioni, prezzi, pesi, allocazione per settore e stile', 'B / 5.C'),
+          ('Selezione', 'Parametri di selezione dei titoli in portafoglio (P/E, P/B, PEG, ABR, revisioni, Zacks Rank, punteggio)', '5.C.b'),
+          ('Watchlist', 'Lista di monitoraggio: 25 titoli coerenti con la strategia e relativi parametri', '5.D'),
+          ('Ordini', 'Ordini di acquisto iniziali da inserire su Investopedia', '4'),
+          ('Registro_Operazioni', 'Registro di tutte le operazioni (acquisti iniziali + trade successivi) con motivazione', '6.2.1'),
           ('Prezzi', 'Prezzi di chiusura giornalieri aggiustati per dividendi (30/06-31/10/2026) + S&P 500', '6.1'),
           ('Rendimenti', 'Rendimenti giornalieri dei titoli, del mercato e del portafoglio', '6.1.1 a-b'),
           ('Statistiche', 'Media aritmetica e geometrica, holding period return, varianza e deviazione standard', '6.1.1c, 6.1.2, 6.1.7'),
@@ -334,6 +338,68 @@ bc.add_data(Reference(sh, min_col=2, max_col=3, min_row=r2 + 6), from_rows=True,
 bc.set_categories(Reference(sh, min_col=2, max_col=3, min_row=r2)); sh.add_chart(bc, f'E{r2}')
 widths(sh, {'A': 34, 'B': 14, 'C': 14}); sh.freeze_panes = 'B5'
 
+
+# ======================= SELEZIONE / WATCHLIST =======================
+SEL_COLS = [('ticker', 'Ticker', None), ('nome', 'Società', None), ('settore', 'Settore', None), ('stile', 'Stile', None),
+            ('zacks_rank', 'Zacks Rank', '0'), ('score', 'Punteggio revisioni (proxy Zacks)', '0.00'), ('PE', 'P/E (ttm)', '0.0'),
+            ('PE_fwd', 'P/E forward', '0.0'), ('PB', 'P/B', '0.0'), ('PEG', 'PEG', '0.00'), ('ABR', 'ABR (1=Strong Buy)', '0.00'),
+            ('n_analisti', 'N. analisti', '0'), ('rev_su_30g', 'Revisioni ↑ 30gg', '0'), ('rev_giu_30g', 'Revisioni ↓ 30gg', '0'),
+            ('var_stima_60g_%', 'Var. stima EPS 60gg %', '0.0'), ('upside_target_%', 'Upside target prezzo %', '0.0'),
+            ('surprise_4q_%', 'Sorpresa EPS media 4Q %', '0.0'), ('mom_3m_%', 'Momentum 3m %', '0.0'), ('mom_6m_%', 'Momentum 6m %', '0.0'),
+            ('beta', 'Beta (5 anni)', '0.00'), ('mkt_cap_mld', 'Capitalizzazione $mld', '#,##0')]
+def seltab(name, df, ttl, sub):
+    ws = wb.create_sheet(name); title(ws, ttl, sub); head(ws, 4, 1, [c[1] for c in SEL_COLS] + ['Agreement'])
+    for i, (_, rw) in enumerate(df.iterrows()):
+        r = 5 + i
+        for j, (k, _, fm) in enumerate(SEL_COLS):
+            v = rw.get(k); v = None if (isinstance(v, float) and pd.isna(v)) else v
+            put(ws, r, 1 + j, v, F_IN, fm)
+        put(ws, r, len(SEL_COLS) + 1, f'=IFERROR((M{r}-N{r})/(M{r}+N{r}),0)', fmt='0.00')
+    e = 4 + len(df); put(ws, e + 1, 1, 'Media', fill=FILL_SUB)
+    for j in range(5, len(SEL_COLS) + 2):
+        if j in (2, 3, 4): continue
+        put(ws, e + 1, j, f'=IFERROR(AVERAGE({L(j)}5:{L(j)}{e}),"")', fmt=SEL_COLS[j-1][2] if j <= len(SEL_COLS) else '0.00', fill=FILL_SUB)
+    ws.conditional_formatting.add(f'F5:F{e}', ColorScaleRule(start_type='min', start_color='FFFFFF', end_type='max', end_color='63BE7B'))
+    ws.conditional_formatting.add(f'K5:K{e}', ColorScaleRule(start_type='min', start_color='63BE7B', end_type='max', end_color='FFFFFF'))
+    ws.conditional_formatting.add(f'E5:E{e}', ColorScaleRule(start_type='num', start_value=1, start_color='63BE7B', mid_type='num', mid_value=3, mid_color='FFEB84', end_type='num', end_value=5, end_color='F8696B'))
+    n0 = e + 3
+    for k, txt in enumerate(['Fonti: Yahoo Finance (multipli, ABR, revisioni e trend stime EPS, sorprese) al 23/11/2026; Zacks Rank da zacks.com.',
+                             'Punteggio = 0,40·z(Agreement) + 0,25·z(Magnitude 60gg) + 0,20·z(−ABR) + 0,15·z(Upside target): replica i criteri Zacks (Agreement, Magnitude, Upside, Surprise).',
+                             'Agreement = (revisioni al rialzo − al ribasso)/(totale revisioni) ultimi 30 giorni, anno fiscale corrente.']):
+        ws.cell(n0 + k, 1, txt).font = Font(italic=True, color='595959')
+    widths(ws, {'A': 8, 'B': 30, 'C': 22, 'D': 10}); ws.freeze_panes = 'C5'
+    for j in range(5, len(SEL_COLS) + 2): ws.column_dimensions[L(j)].width = 11
+    ws.row_dimensions[4].height = 45
+    return ws
+seltab('Selezione', port, 'Parametri di selezione - titoli del portafoglio iniziale', 'Verde = migliore. ABR: 1 = Strong Buy, 5 = Strong Sell. Zacks Rank: 1 = Strong Buy')
+seltab('Watchlist', pd.read_csv('dati/watchlist.csv'), 'Lista di monitoraggio (25 titoli)', 'Candidati per sostituzioni e nuovi acquisti durante il periodo di trading')
+
+# ======================= ORDINI =======================
+od = wb.create_sheet('Ordini'); title(od, 'Ordini iniziali da inserire su Investopedia', 'Tipo ordine: Market, durata Day. Eseguire durante l\'orario di borsa USA (15:30-22:00 ora italiana)')
+head(od, 4, 1, ['N.', 'Ticker', 'Azione', 'N. azioni', 'Prezzo stimato (chiusura 23/11)', 'Controvalore stimato', 'Peso target', 'Eseguito? (Sì/No)', 'Prezzo eseguito'])
+order = port.assign(cv=port.azioni*port.prezzo_acquisto).sort_values('cv')  # prima i piccoli: l'ultimo si può ridurre se manca liquidità
+for i, (_, rw) in enumerate(order.iterrows()):
+    r = 5 + i; put(od, r, 1, i + 1); put(od, r, 2, rw.ticker, F_IN); put(od, r, 3, 'Buy', F_IN); put(od, r, 4, int(rw.azioni), F_IN, '#,##0')
+    put(od, r, 5, float(rw.prezzo_acquisto), F_IN, USD); put(od, r, 6, f'=D{r}*E{r}', fmt=USD); put(od, r, 7, float(rw.peso_target), F_IN, PCT)
+    put(od, r, 8, '', F_IN); put(od, r, 9, None, F_IN, USD)
+e = 4 + len(order); put(od, e + 1, 5, 'Totale', fill=FILL_SUB); put(od, e + 1, 6, f'=SUM(F5:F{e})', fmt=USD, fill=FILL_SUB)
+put(od, e + 2, 5, '% del capitale'); put(od, e + 2, 6, f'=F{e+1}/1000000', fmt=PCT, fill=FILL_KEY)
+od.cell(e + 4, 1, 'Nota: gli ordini sono in ordine crescente di controvalore. Se all\'ultimo ordine la liquidità non basta (prezzi saliti), ridurre di qualche azione: l\'obiettivo è restare tra 95% e 100%.').font = Font(italic=True)
+widths(od, {'A': 4, 'B': 9, 'C': 8, 'D': 10, 'E': 16, 'F': 16, 'G': 10, 'H': 12, 'I': 14})
+
+# ======================= REGISTRO OPERAZIONI =======================
+rg = wb.create_sheet('Registro_Operazioni'); title(rg, 'Registro operazioni', 'Da aggiornare a ogni operazione con i dati della Trade History di Investopedia')
+head(rg, 4, 1, ['Data', 'Ticker', 'Buy / Sell', 'N. azioni', 'Prezzo eseguito', 'Controvalore', 'Commissione', 'Tipo', 'Motivazione'])
+for i, (_, rw) in enumerate(port.iterrows()):
+    r = 5 + i; put(rg, r, 1, dt.datetime(2026, 11, 24), F_IN, DATE); put(rg, r, 2, rw.ticker, F_IN); put(rg, r, 3, 'Buy', F_IN)
+    put(rg, r, 4, int(rw.azioni), F_IN, '#,##0'); put(rg, r, 5, float(rw.prezzo_acquisto), F_IN, USD); put(rg, r, 6, f'=IF(C{r}="Buy",1,-1)*D{r}*E{r}', fmt=USD)
+    put(rg, r, 7, 0, F_IN, USD); put(rg, r, 8, 'Portafoglio iniziale', F_IN); put(rg, r, 9, f'Acquisto iniziale - stile {rw.stile}, punteggio revisioni {rw.score:.2f}', F_IN)
+for k in range(15): 
+    for c in range(1, 10): put(rg, 5 + n + k, c, None, F_IN)
+    put(rg, 5 + n + k, 6, f'=IF(B{5+n+k}="","",IF(C{5+n+k}="Buy",1,-1)*D{5+n+k}*E{5+n+k})', fmt=USD)
+ee = 4 + n + 15; put(rg, ee + 2, 5, 'N. trade (esclusi acquisti iniziali)'); put(rg, ee + 2, 6, f'=COUNTIFS(B5:B{ee},"<>",H5:H{ee},"<>Portafoglio iniziale")', fill=FILL_KEY)
+widths(rg, {'A': 12, 'B': 9, 'C': 9, 'D': 10, 'E': 14, 'F': 15, 'G': 12, 'H': 20, 'I': 80})
+
 # ======================= CONTROLLI =======================
 ck = wb.create_sheet('Controlli'); title(ck, 'Controlli automatici di coerenza'); head(ck, 3, 1, ['Controllo', 'Valore', 'Esito'])
 checks = [('Somma dei pesi = 100%', f'=Portafoglio!J{tr}', f'=ABS(B4-1)<0.000001'),
@@ -352,6 +418,8 @@ ck.conditional_formatting.add(f'C4:C{3+len(checks)}', CellIsRule(operator='equal
 put(ck, 5 + len(checks), 1, 'TUTTI I CONTROLLI SUPERATI', fill=FILL_KEY).font = Font(bold=True); put(ck, 5 + len(checks), 3, f'=AND(C4:C{3+len(checks)})', fill=FILL_KEY)
 widths(ck, {'A': 44, 'B': 14, 'C': 12})
 
+order_ = ['Indice', 'Portafoglio', 'Selezione', 'Watchlist', 'Ordini', 'Registro_Operazioni']
+wb._sheets = [wb[x] for x in order_] + [w for w in wb._sheets if w.title not in order_]
 for ws in wb.worksheets: ws.sheet_properties.tabColor = {'Indice': NAVY, 'Controlli': '70AD47'}.get(ws.title, '8EA9DB')
 for ws in wb.worksheets:
     for ch in ws._charts:
