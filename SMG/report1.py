@@ -59,7 +59,7 @@ el += [Paragraph('<b>Why it should work now.</b> The macro picture in November 2
     'names with real earnings support) and <b>momentum</b> (healthcare, which leads the market as a defensive sector). We underweight technology (19% vs about '
     '33% in the S&P 500) and avoid utilities, real estate and consumer discretionary, which suffer from rising rates and stagflation.', B)]
 
-el += [Paragraph('C. Initial portfolio composition', H2), Paragraph(f'<b>a. Companies and shares held</b> (orders of 24/11/2026; prices are the last close and will be updated with execution prices).', B)]
+el += [Paragraph('C. Initial portfolio composition', H2), Paragraph(f'<b>a. Companies and shares held</b> (orders of 24/11/2026; market orders, $0 commission; prices are order-preview estimates, to be replaced by fill prices).', B)]
 rows = [['Ticker', 'Company', 'Industry', 'Shares', 'Weight', 'Background']]
 for _, r in p.iterrows():
     rows.append([r.ticker, Paragraph(r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corp.'), TC), Paragraph(r.industria, TC), f'{r.azioni:,}', f'{r.w:.1%}', Paragraph(BG[r.ticker], TC)])

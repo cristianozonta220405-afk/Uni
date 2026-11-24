@@ -375,25 +375,32 @@ seltab('Selezione', port, 'Parametri di selezione - titoli del portafoglio inizi
 seltab('Watchlist', pd.read_csv('dati/watchlist.csv'), 'Lista di monitoraggio (25 titoli)', 'Candidati per sostituzioni e nuovi acquisti durante il periodo di trading')
 
 # ======================= ORDINI =======================
-od = wb.create_sheet('Ordini'); title(od, 'Ordini iniziali da inserire su Investopedia', 'Tipo ordine: Market, durata Day. Eseguire durante l\'orario di borsa USA (15:30-22:00 ora italiana)')
-head(od, 4, 1, ['N.', 'Ticker', 'Azione', 'N. azioni', 'Prezzo stimato (chiusura 23/11)', 'Controvalore stimato', 'Peso target', 'Eseguito? (Sì/No)', 'Prezzo eseguito'])
-order = port.assign(cv=port.azioni*port.prezzo_acquisto).sort_values('cv')  # prima i piccoli: l'ultimo si può ridurre se manca liquidità
-for i, (_, rw) in enumerate(order.iterrows()):
-    r = 5 + i; put(od, r, 1, i + 1); put(od, r, 2, rw.ticker, F_IN); put(od, r, 3, 'Buy', F_IN); put(od, r, 4, int(rw.azioni), F_IN, '#,##0')
-    put(od, r, 5, float(rw.prezzo_acquisto), F_IN, USD); put(od, r, 6, f'=D{r}*E{r}', fmt=USD); put(od, r, 7, float(rw.peso_target), F_IN, PCT)
-    put(od, r, 8, '', F_IN); put(od, r, 9, None, F_IN, USD)
-e = 4 + len(order); put(od, e + 1, 5, 'Totale', fill=FILL_SUB); put(od, e + 1, 6, f'=SUM(F5:F{e})', fmt=USD, fill=FILL_SUB)
-put(od, e + 2, 5, '% del capitale'); put(od, e + 2, 6, f'=F{e+1}/1000000', fmt=PCT, fill=FILL_KEY)
-od.cell(e + 4, 1, 'Nota: gli ordini sono in ordine crescente di controvalore. Se all\'ultimo ordine la liquidità non basta (prezzi saliti), ridurre di qualche azione: l\'obiettivo è restare tra 95% e 100%.').font = Font(italic=True)
-widths(od, {'A': 4, 'B': 9, 'C': 8, 'D': 10, 'E': 16, 'F': 16, 'G': 10, 'H': 12, 'I': 14})
-
+od = wb.create_sheet('Ordini'); ORD = pd.read_csv('dati/ordini_24nov.csv')
+title(od, 'Ordini iniziali inviati su Investopedia - 24/11/2026', 'Market, Day Only, commissione $0. Prezzo anteprima = stima al momento dell\'invio; prezzo fill = esecuzione reale (Trade History)')
+head(od, 4, 1, ['N.', 'Ticker', 'N. ordine', 'Ora invio (ET)', 'Azioni ordinate', 'Prezzo anteprima', 'Totale anteprima (piattaforma)', 'Totale ricalcolato', 'Differenza',
+                'Stato', 'Azioni eseguite', 'Prezzo fill', 'Costo reale', 'Slippage $', 'Slippage %'])
+for i, rw in ORD.iterrows():
+    r = 5 + i; put(od, r, 1, i + 1); put(od, r, 2, rw.ticker, F_IN); put(od, r, 3, None if pd.isna(rw.n_ordine) else str(int(rw.n_ordine)), F_IN)
+    put(od, r, 4, None if pd.isna(rw.ora_ET) else rw.ora_ET, F_IN); put(od, r, 5, int(rw.azioni), F_IN, '#,##0'); put(od, r, 6, float(rw.prezzo_anteprima), F_IN, USD)
+    put(od, r, 7, float(rw.totale_anteprima), F_IN, USD); put(od, r, 8, f'=E{r}*F{r}', fmt=USD); put(od, r, 9, f'=G{r}-H{r}', fmt=USD)
+    put(od, r, 10, rw.stato, F_IN); put(od, r, 11, None if pd.isna(rw.azioni_eseguite) else int(rw.azioni_eseguite), F_IN, '#,##0')
+    put(od, r, 12, None if pd.isna(rw.prezzo_fill) else float(rw.prezzo_fill), F_IN, USD)
+    put(od, r, 13, f'=IF(L{r}="","",K{r}*L{r})', fmt=USD); put(od, r, 14, f'=IF(L{r}="","",M{r}-K{r}*F{r})', fmt=USD); put(od, r, 15, f'=IF(L{r}="","",L{r}/F{r}-1)', fmt=PCT)
+e = 4 + len(ORD); put(od, e + 1, 2, 'Totale', fill=FILL_SUB)
+for c in (7, 8, 9, 13, 14): put(od, e + 1, c, f'=SUM({L(c)}5:{L(c)}{e})', fmt=USD, fill=FILL_SUB)
+put(od, e + 3, 6, 'Capitale iniziale'); put(od, e + 3, 8, 1_000_000, F_IN, USD)
+put(od, e + 4, 6, 'Cash stimato (anteprime)'); put(od, e + 4, 8, f'=H{e+3}-H{e+1}', fmt=USD, fill=FILL_KEY)
+put(od, e + 5, 6, '% investita (anteprime)'); put(od, e + 5, 8, f'=H{e+1}/H{e+3}', fmt=PCT, fill=FILL_KEY)
+put(od, e + 6, 6, 'Cash reale (dopo i fill)'); put(od, e + 6, 8, f'=IF(COUNT(L5:L{e})={len(ORD)},H{e+3}-M{e+1},"in attesa dei fill")', fmt=USD, fill=FILL_KEY)
+widths(od, {'A': 4, 'B': 8, 'C': 12, 'D': 10, 'E': 9, 'F': 12, 'G': 15, 'H': 15, 'I': 10, 'J': 9, 'K': 9, 'L': 11, 'M': 14, 'N': 11, 'O': 9}); od.row_dimensions[4].height = 42
 # ======================= REGISTRO OPERAZIONI =======================
 rg = wb.create_sheet('Registro_Operazioni'); title(rg, 'Registro operazioni', 'Da aggiornare a ogni operazione con i dati della Trade History di Investopedia')
 head(rg, 4, 1, ['Data', 'Ticker', 'Buy / Sell', 'N. azioni', 'Prezzo eseguito', 'Controvalore', 'Commissione', 'Tipo', 'Motivazione'])
 for i, (_, rw) in enumerate(port.iterrows()):
     r = 5 + i; put(rg, r, 1, dt.datetime(2026, 11, 24), F_IN, DATE); put(rg, r, 2, rw.ticker, F_IN); put(rg, r, 3, 'Buy', F_IN)
     put(rg, r, 4, int(rw.azioni), F_IN, '#,##0'); put(rg, r, 5, float(rw.prezzo_acquisto), F_IN, USD); put(rg, r, 6, f'=IF(C{r}="Buy",1,-1)*D{r}*E{r}', fmt=USD)
-    put(rg, r, 7, 0, F_IN, USD); put(rg, r, 8, 'Portafoglio iniziale', F_IN); put(rg, r, 9, f'Acquisto iniziale - stile {rw.stile}, punteggio revisioni {rw.score:.2f}', F_IN)
+    put(rg, r, 7, 0, F_IN, USD); put(rg, r, 8, 'Portafoglio iniziale', F_IN)
+    if True: rg.cell(r, 5).comment = None; put(rg, r, 9, f'Acquisto iniziale - stile {rw.stile}, punteggio revisioni {rw.score:.2f}', F_IN)
 for k in range(15): 
     for c in range(1, 10): put(rg, 5 + n + k, c, None, F_IN)
     put(rg, 5 + n + k, 6, f'=IF(B{5+n+k}="","",IF(C{5+n+k}="Buy",1,-1)*D{5+n+k}*E{5+n+k})', fmt=USD)

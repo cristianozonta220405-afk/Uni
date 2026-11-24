@@ -72,7 +72,7 @@ card(s, 22.4, 4.0, 10.2, 8.2, 'Momentum  (16%)', ['6-month return > 20%', '3-mon
 card(s, 1.2, 12.7, 31.4, 4.6, 'Portfolio constraints', ['Max 25% per sector  ·  max 3 technology names  ·  10–30 stocks (we hold 19)  ·  ≥ 95% invested (we invest ≈ 96.6%)  ·  no utilities, real estate, consumer discretionary (rate- and stagflation-sensitive)'], NAVY, 13)
 
 # 6 portafoglio
-s = slide('The initial portfolio')
+s = slide('The initial portfolio'); tx(s, 22, 2.75, 11, 0.5, 'Market orders of 24/11/2026 – preview prices, fills pending', 9, color=GREY, align=PP_ALIGN.RIGHT)
 rows = [['Ticker', 'Company', 'Sector', 'Style', 'Shares', 'Weight']] + [[r.ticker, r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corp.')[:28], SHORT.get(r.settore, r.settore), r.stile, f'{r.azioni:,}', f'{r.w:.1%}'] for _, r in p.sort_values('w', ascending=False).iterrows()]
 t = s.shapes.add_table(len(rows), 6, Cm(1.2), Cm(3.1), Cm(31.4), Cm(14.6)).table
 for j, wdt in enumerate([3, 10, 6.4, 4.5, 3.5, 4]): t.columns[j].width = Cm(wdt)
