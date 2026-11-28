@@ -63,10 +63,10 @@ body = f'''
   <div class="sub">Corporate Finance and Financial Institutions 2</div>
 </header>
 
-<section><h2><b>A</b>Group name and composition</h2>
+<section><h2><b>A</b>Group name and members</h2>
 <p><span class="lab">Group:</span> {e(GROUP)}<br><span class="lab">Members:</span> {e(members)}</p></section>
 
-<section><h2><b>B</b>Strategy adopted</h2>
+<section><h2><b>B</b>Investment strategy adopted</h2>
 <p class="lead">We buy US large caps whose earnings estimates are being raised, only at moderate valuations, and spread them across value, growth and momentum stocks.</p>
 <h3>Why earnings revisions</h3><p>Leonard Zacks (1979) found that changes in analysts' earnings estimates move stock prices more than any other factor over one to three months,
 which is about the length of the game. We rebuilt his ranking from analyst data for 151 large caps. Each stock gets a revision score made of the share of upward EPS revisions in the last
