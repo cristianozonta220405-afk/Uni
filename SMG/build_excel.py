@@ -10,8 +10,8 @@ from openpyxl.chart.trendline import Trendline
 from openpyxl.formatting.rule import ColorScaleRule, DataBarRule, CellIsRule
 from openpyxl.workbook.defined_name import DefinedName
 
-GROUP = os.environ.get('SMG_GROUP', 'groupname')
-OUT = f'out/{GROUP}_report2.xlsx'
+GROUP = os.environ.get('SMG_GROUP', 'ZZ Capital')
+OUT = f"out/{GROUP.replace(' ', '_')}_report2.xlsx"
 port = pd.read_csv('dati/portafoglio_iniziale.csv')
 prices = pd.read_csv('dati/prezzi_lug_ott.csv', index_col=0, parse_dates=True)
 tk = list(port.ticker); n = len(tk); T0 = len(prices); T = T0 - 1

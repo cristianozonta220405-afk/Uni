@@ -6,8 +6,8 @@ from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
 
-GROUP = os.environ.get('SMG_GROUP', '[GROUP NAME]')
-MEMBERS = os.environ.get('SMG_MEMBERS', '[Name Surname, student ID] (spokesperson); [Name Surname, ID]; [Name Surname, ID]; [Name Surname, ID]')
+GROUP = os.environ.get('SMG_GROUP', 'ZZ Capital')
+MEMBERS = os.environ.get('SMG_MEMBERS', 'Cristiano Zonta, student ID 909123 (spokesperson); Mattia Zanrosso, student ID 909945')
 p = pd.read_csv('dati/portafoglio_iniziale.csv'); wl = pd.read_csv('dati/watchlist.csv')
 p['cv'] = p.azioni*p.prezzo_acquisto; p['w'] = p.cv/p.cv.sum(); inv = p.cv.sum()
 has_z = p.zacks_rank.notna().any()
@@ -59,7 +59,7 @@ el += [Paragraph('<b>Why it should work now.</b> The macro picture in November 2
     'names with real earnings support) and <b>momentum</b> (healthcare, which leads the market as a defensive sector). We underweight technology (19% vs about '
     '33% in the S&P 500) and avoid utilities, real estate and consumer discretionary, which suffer from rising rates and stagflation.', B)]
 
-el += [Paragraph('C. Initial portfolio composition', H2), Paragraph(f'<b>a. Companies and shares held</b> (orders of 24/11/2026; market orders, $0 commission; prices are order-preview estimates, to be replaced by fill prices).', B)]
+el += [Paragraph('C. Initial portfolio composition', H2), Paragraph(f'<b>a. Companies and shares held</b> (orders of 24/11/2026; market orders, $0 commission; prices are the actual execution prices).', B)]
 rows = [['Ticker', 'Company', 'Industry', 'Shares', 'Weight', 'Background']]
 for _, r in p.iterrows():
     rows.append([r.ticker, Paragraph(r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corp.'), TC), Paragraph(r.industria, TC), f'{r.azioni:,}', f'{r.w:.1%}', Paragraph(BG[r.ticker], TC)])
@@ -80,8 +80,8 @@ el += [Paragraph('MCK has negative book value (buybacks), so P/B is not meaningf
 
 el += [Paragraph('<b>c. Weighting criterion.</b> We built a <b>conviction-weighted</b> portfolio: weight = 5% ± 2.5% according to the standardised revision score, '
     'then normalised, with a 25% cap per sector (weights from 2.7% to 8.1%). We rejected equal weights because our signals differ in strength, and value '
-    'weights because they would concentrate the portfolio in mega caps and technology, against our strategy. About 3.4% stays in cash as a buffer for price '
-    'moves (minimum invested 95%).', B)]
+    'weights because they would concentrate the portfolio in mega caps and technology, against our strategy. The first tranche invested 96.5% of the capital; the remaining cash (minus a $1,500 '
+    'buffer) will be added on 30/11 in equal parts to COF, VLO, PWR and APH, the highest-scoring names outside healthcare, so the 25% cap still holds.', B)]
 sec = p.groupby('settore').w.sum().sort_values(ascending=False); sty = p.groupby('stile').w.sum()
 el += [Paragraph('<b>d. Diversification.</b> 19 stocks in 7 sectors: ' + ', '.join(f'{SHORT.get(k, k)} {v:.0%}' for k, v in sec.items()) +
     '; styles: ' + ', '.join(f'{k} {sty[k]:.0%}' for k in ['Value', 'Growth', 'Momentum']) + '. No sector exceeds 25% and technology is limited to three names. '
@@ -98,6 +98,6 @@ for _, r in wl.iterrows():
     rows.append([r.ticker, SHORT.get(r.settore, r.settore), r.stile, f(r.PE_fwd), f(r.PEG, 2), f(r.ABR, 2), f'{r.rev_su_30g:.0f} / {r.rev_giu_30g:.0f}', f'{r["var_stima_60g_%"]:+.1f}%', f(r.score, 2), TRIG[r.ticker]])
 el += [table(rows, None, num_from=3)]
 
-out = f'out/{GROUP if GROUP[0] != "[" else "groupname"}_report1.pdf'
+out = f"out/{GROUP.replace(' ', '_')}_report1.pdf"
 SimpleDocTemplate(out, pagesize=A4, leftMargin=1.6*cm, rightMargin=1.6*cm, topMargin=1.3*cm, bottomMargin=1.3*cm, title='SMG Initial Report').build(el)
 print(out)
