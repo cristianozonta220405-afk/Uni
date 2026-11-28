@@ -47,11 +47,11 @@ members = '; '.join(f'{n}, student ID {i}' + (f' ({r})' if r else '') for n, i, 
 t_port = table(['Ticker', 'Company', 'Industry', 'Shares', 'Price', 'Weight', 'Background'],
     [[r.ticker, e(r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corp.')), e(r.industria), f'{r.azioni:,}', f'${r.prezzo_acquisto:,.2f}', f'{r.w:.1%}', e(BG[r.ticker])] for _, r in p.iterrows()]
     + [['', '<b>Total invested</b>', '', '', '', f'<b>{inv/1e6:.1%}</b>', f'${inv:,.0f} of $1,000,000; cash {1-inv/1e6:.1%}']], 3, 'port', 5)
-hdr = ['Ticker', 'Style', 'Fwd P/E', 'P/B', 'PEG', 'ABR', 'Rev. up/down 30d', 'EPS est. change 60d', 'Surprise 4Q', 'Score'] + (['Zacks Rank'] if has_z else [])
+hdr = ['Ticker', 'Style', 'Fwd P/E', 'P/B', 'PEG', 'ABR', 'Rev. up/down 30d', 'EPS est. change 60d', 'Surprise 4Q', 'Score'] + (['Zacks Rank', 'Style (VGM)'] if has_z else [])
 rows = [[r.ticker, r.stile, f(r.PE_fwd), f(r.PB), f(r.PEG, 2), f(r.ABR, 2), f'{r.rev_su_30g:.0f} / {r.rev_giu_30g:.0f}', f'{r["var_stima_60g_%"]:+.1f}%',
-         f'{r["surprise_4q_%"]:+.1f}%', f(r.score, 2)] + ([f(r.zacks_rank, 0)] if has_z else []) for _, r in p.iterrows()]
+         f'{r["surprise_4q_%"]:+.1f}%', f(r.score, 2)] + ([f(r.zacks_rank, 0), r.zacks_vgm] if has_z else []) for _, r in p.iterrows()]
 rows.append(['<b>Median</b>', '', f(p.PE_fwd.median()), f(p.PB[p.PB > 0].median()), f(p.PEG.median(), 2), f(p.ABR.median(), 2), '', f'{p["var_stima_60g_%"].median():+.1f}%',
-             f'{p["surprise_4q_%"].median():+.1f}%', f(p.score.median(), 2)] + ([''] if has_z else []))
+             f'{p["surprise_4q_%"].median():+.1f}%', f(p.score.median(), 2)] + (['', ''] if has_z else []))
 t_par = table(hdr, rows, 2, 'par')
 t_wl = table(['Ticker', 'Sector', 'Style', 'Fwd P/E', 'PEG', 'ABR', 'Rev. up/down', 'EPS est. 60d', 'Score', 'Buy if'],
     [[r.ticker, SHORT.get(r.settore, r.settore), r.stile, f(r.PE_fwd), f(r.PEG, 2), f(r.ABR, 2), f'{r.rev_su_30g:.0f} / {r.rev_giu_30g:.0f}', f'{r["var_stima_60g_%"]:+.1f}%', f(r.score, 2), TRIG[r.ticker]] for _, r in wl.iterrows()], 3, 'wl', 8)
@@ -88,7 +88,7 @@ most from rising rates and weak consumer spending.</p></section>
 sorted them by style. Value: forward P/E below 14 and P/B below 3.5. Growth: EPS growth above 25% and PEG below 1.6. Momentum: 6-month return above 20% and 3-month return above 5%.
 Within each style we took the highest scores, subject to the sector limits in point d.</p>
 {t_par}
-<p class="note">MCK has negative book value because of share buybacks, so its P/B is not meaningful. Data: Yahoo Finance, 23/11/2026{'; Zacks Rank: zacks.com, 27/11/2026.' if has_z else '.'}</p>
+<p class="note">MCK has negative book value because of share buybacks, so its P/B is not meaningful. Data: Yahoo Finance, 23/11/2026{'; Zacks Rank and VGM Style Score: zacks.com, 27/11/2026.' if has_z else '.'}</p>
 <h3>c. Weighting criterion</h3><p>Weights follow conviction. Each stock starts at 5% and moves up or down by up to 2.5 points with its standardised revision score; the
 weights are then normalised and capped at 25% per sector, which gives a range from {w.min():.1%} to {w.max():.1%}. Equal weights would ignore the differences in signal strength. Value weights
 would put most of the money into the largest companies and raise the technology share we want to keep low. {tranche}</p>
