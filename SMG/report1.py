@@ -45,7 +45,7 @@ el += [Paragraph('A. Group name and composition', H2), Paragraph(f'<b>Group:</b>
 el += [Paragraph('B. Strategy adopted', H2)]
 el += [Paragraph('<b>We buy US large caps whose earnings estimates are being raised, only at moderate valuations, and spread them across value, growth and '
     'momentum stocks.</b>', B)]
-zline = ('The Zacks Rank of each holding, reported in the table in C.b, confirms the score. ' if has_z else '')
+zline = ('The Zacks Rank (table in C.b) is a second check: eight holdings are rated Strong Buy or Buy, eleven Hold and none Sell. ' if has_z else '')
 el += [Paragraph('<b>Why earnings revisions.</b> Leonard Zacks (1979) found that changes in analysts\' earnings estimates move stock prices more than any '
     'other factor over one to three months, which is about the length of the game. We rebuilt his ranking from analyst data for 151 large caps. '
     'Each stock gets a revision score made of the share of upward EPS revisions in the last 30 days (Agreement, weight 40%), the change in the consensus '
@@ -80,7 +80,7 @@ for _, r in p.iterrows():
 rows.append(['Median', '', f(p.PE_fwd.median()), f(p.PB[p.PB > 0].median()), f(p.PEG.median(), 2), f(p.ABR.median(), 2), '', f'{p["var_stima_60g_%"].median():+.1f}%', f'{p["surprise_4q_%"].median():+.1f}%', f(p.score.median(), 2)] + ([''] if has_z else []))
 el += [table(rows, None, num_from=2)]
 el += [Paragraph('MCK has negative book value because of share buybacks, so its P/B is not meaningful. '
-    'Data: Yahoo Finance' + (' and Zacks' if has_z else '') + ', 23/11/2026.', SM)]
+    'Data: Yahoo Finance, 23/11/2026' + ('; Zacks Rank: zacks.com, 27/11/2026.' if has_z else '.'), SM)]
 
 w = p.w
 el += [Paragraph(f'<b>c. Weighting criterion.</b> Weights follow conviction. Each stock starts at 5% and moves up or down by up to 2.5 points with its standardised '

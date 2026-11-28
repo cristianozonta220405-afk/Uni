@@ -142,7 +142,7 @@ for i, (v, l) in enumerate(fun):
     rect(s, x_, y_, 5.55, 4.95, BLACK if i == 2 else RGBColor(0xFA,0xFB,0xFD), None, 0.07)
     T(s, x_ + 0.5, y_ + 0.6, 4.6, 1.6, v, 36, WHITE if i == 2 else INK, HEAD)
     T(s, x_ + 0.5, y_ + 3.3, 4.6, 1.4, l, 8.5, MUTED_D if i == 2 else INK2, MONO, spacing=1.05)
-T(s, M, 17.4, 30, 0.4, 'Then we checked the price: forward P/E, P/B and PEG (slide 8). Limit: the signal works over a short horizon of one to three months.', 7.5, INK2, MONO)
+T(s, M, 17.4, 30, 0.4, 'Zacks Rank check (27/11): 8 holdings Strong Buy or Buy, 11 Hold, none Sell. Then we checked the price with forward P/E, P/B and PEG (slide 8).', 7.5, INK2, MONO)
 
 # ================= 05 regole =================
 s = slide(True, 'Screening', '05', bgimg='assets/bg_dark2.png')
@@ -165,8 +165,8 @@ T(s, M + 0.6, 15.85, 29.5, 1.2, f'At most 25% per sector and three technology st
 s = slide(False, 'Portfolio', '06')
 title(s, M, 2.9, 20, [[('The initial portfolio', False)]], 30)
 T(s, 33.867 - M - 12, 3.35, 12, 0.5, 'Market orders executed 24/11/2026, fill prices', 8, INK2, MONO, PP_ALIGN.RIGHT)
-cols = ['Ticker', 'Company', 'Sector', 'Style', 'Shares', 'Fill price', 'Weight']; cwid = [2.4, 9.0, 5.6, 3.6, 2.8, 3.6, 3.07]
-rows = [[r.ticker, r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corporation')[:34], SHORT.get(r.settore, r.settore), r.stile, f'{r.azioni:,}', f'${r.prezzo_acquisto:,.2f}', f'{r.w:.1%}'] for _, r in p.sort_values('w', ascending=False).iterrows()]
+cols = ['Ticker', 'Company', 'Sector', 'Style', 'Zacks', 'Shares', 'Fill price', 'Weight']; cwid = [2.4, 8.0, 5.2, 3.4, 2.2, 2.6, 3.4, 2.87]
+rows = [[r.ticker, r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corp.').replace(' Corporation', ' Corp.').replace(' Incorporated', ' Inc.').replace(' Financial Corp.', ' Financial'), SHORT.get(r.settore, r.settore), r.stile, str(int(r.zacks_rank)), f'{r.azioni:,}', f'${r.prezzo_acquisto:,.2f}', f'{r.w:.1%}'] for _, r in p.sort_values('w', ascending=False).iterrows()]
 y_ = 5.0; rh = 0.6
 xs = np.cumsum([M] + cwid)
 for j, c in enumerate(cols): T(s, xs[j] + 0.25, y_, cwid[j] - 0.5, 0.4, c, 7.5, INK2, MONO, PP_ALIGN.RIGHT if j >= 4 else PP_ALIGN.LEFT)
@@ -174,11 +174,11 @@ rect(s, M, y_ + 0.55, sum(cwid), 0.02, INK2, None, shape=MSO_SHAPE.RECTANGLE)
 for i, row in enumerate(rows):
     yy = y_ + 0.72 + i * rh
     if i % 2 == 0: rect(s, M, yy - 0.06, sum(cwid), rh, RGBColor(0xFA,0xFB,0xFD), None, shape=MSO_SHAPE.RECTANGLE)
-    for j, v in enumerate(row): T(s, xs[j] + 0.25, yy + 0.06, cwid[j] - 0.5, 0.45, v, 9, INK if j != 0 else ACC_L, MONO if j in (0, 4, 5, 6) else BODY, PP_ALIGN.RIGHT if j >= 4 else PP_ALIGN.LEFT, bold=(j == 0))
+    for j, v in enumerate(row): T(s, xs[j] + 0.25, yy + 0.06, cwid[j] - 0.5, 0.45, v, 9, INK if j != 0 else ACC_L, MONO if j in (0, 4, 5, 6, 7) else BODY, PP_ALIGN.RIGHT if j >= 4 else PP_ALIGN.LEFT, bold=(j == 0))  # j>=4: numeri
 yy = y_ + 0.72 + len(rows) * rh + 0.1
 rect(s, M, yy, sum(cwid), 0.02, INK2, None, shape=MSO_SHAPE.RECTANGLE)
 T(s, M + 0.25, yy + 0.15, 20, 0.45, f'Total invested ${p.cv.sum():,.0f} of $1,000,000  /  cash {1-INV:.1%}', 8.5, INK, MONO)
-T(s, xs[6] + 0.25, yy + 0.15, cwid[6] - 0.5, 0.45, f'{INV:.1%}', 8.5, INK, MONO, PP_ALIGN.RIGHT)
+T(s, xs[7] + 0.25, yy + 0.15, cwid[7] - 0.5, 0.45, f'{INV:.1%}', 8.5, INK, MONO, PP_ALIGN.RIGHT)
 
 # ================= 07 diversificazione =================
 s = slide(False, 'Diversification', '07', cubes=True)

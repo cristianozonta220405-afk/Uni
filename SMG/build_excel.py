@@ -343,7 +343,7 @@ widths(sh, {'A': 34, 'B': 14, 'C': 14}); sh.freeze_panes = 'B5'
 
 # ======================= SELEZIONE / WATCHLIST =======================
 SEL_COLS = [('ticker', 'Ticker', None), ('nome', 'Società', None), ('settore', 'Settore', None), ('stile', 'Stile', None),
-            ('zacks_rank', 'Zacks Rank', '0'), ('score', 'Punteggio revisioni (proxy Zacks)', '0.00'), ('PE', 'P/E (ttm)', '0.0'),
+            ('zacks_rank', 'Zacks Rank', '0'), ('zacks_vgm', 'Zacks VGM Score', None), ('score', 'Punteggio revisioni (proxy Zacks)', '0.00'), ('PE', 'P/E (ttm)', '0.0'),
             ('PE_fwd', 'P/E forward', '0.0'), ('PB', 'P/B', '0.0'), ('PEG', 'PEG', '0.00'), ('ABR', 'ABR (1=Strong Buy)', '0.00'),
             ('n_analisti', 'N. analisti', '0'), ('rev_su_30g', 'Revisioni ↑ 30gg', '0'), ('rev_giu_30g', 'Revisioni ↓ 30gg', '0'),
             ('var_stima_60g_%', 'Var. stima EPS 60gg %', '0.0'), ('upside_target_%', 'Upside target prezzo %', '0.0'),
@@ -356,16 +356,16 @@ def seltab(name, df, ttl, sub):
         for j, (k, _, fm) in enumerate(SEL_COLS):
             v = rw.get(k); v = None if (isinstance(v, float) and pd.isna(v)) else v
             put(ws, r, 1 + j, v, F_IN, fm)
-        put(ws, r, len(SEL_COLS) + 1, f'=IFERROR((M{r}-N{r})/(M{r}+N{r}),0)', fmt='0.00')
+        ci = {k: L(1 + j) for j, (k, _, _) in enumerate(SEL_COLS)}; put(ws, r, len(SEL_COLS) + 1, f"=IFERROR(({ci['rev_su_30g']}{r}-{ci['rev_giu_30g']}{r})/({ci['rev_su_30g']}{r}+{ci['rev_giu_30g']}{r}),0)", fmt='0.00')
     e = 4 + len(df); put(ws, e + 1, 1, 'Media', fill=FILL_SUB)
     for j in range(5, len(SEL_COLS) + 2):
-        if j in (2, 3, 4): continue
+        if j in (2, 3, 4, 6): continue
         put(ws, e + 1, j, f'=IFERROR(AVERAGE({L(j)}5:{L(j)}{e}),"")', fmt=SEL_COLS[j-1][2] if j <= len(SEL_COLS) else '0.00', fill=FILL_SUB)
-    ws.conditional_formatting.add(f'F5:F{e}', ColorScaleRule(start_type='min', start_color='FFFFFF', end_type='max', end_color='63BE7B'))
-    ws.conditional_formatting.add(f'K5:K{e}', ColorScaleRule(start_type='min', start_color='63BE7B', end_type='max', end_color='FFFFFF'))
+    ws.conditional_formatting.add(f'G5:G{e}', ColorScaleRule(start_type='min', start_color='FFFFFF', end_type='max', end_color='63BE7B'))
+    ws.conditional_formatting.add(f'L5:L{e}', ColorScaleRule(start_type='min', start_color='63BE7B', end_type='max', end_color='FFFFFF'))
     ws.conditional_formatting.add(f'E5:E{e}', ColorScaleRule(start_type='num', start_value=1, start_color='63BE7B', mid_type='num', mid_value=3, mid_color='FFEB84', end_type='num', end_value=5, end_color='F8696B'))
     n0 = e + 3
-    for k, txt in enumerate(['Fonti: Yahoo Finance (multipli, ABR, revisioni e trend stime EPS, sorprese) al 23/11/2026; Zacks Rank da zacks.com.',
+    for k, txt in enumerate(['Fonti: Yahoo Finance (multipli, ABR, revisioni e trend stime EPS, sorprese) al 23/11/2026; Zacks Rank e VGM Score da zacks.com al 27/11/2026.',
                              'Punteggio = 0,40·z(Agreement) + 0,25·z(Magnitude 60gg) + 0,20·z(−ABR) + 0,15·z(Upside target): replica i criteri Zacks (Agreement, Magnitude, Upside, Surprise).',
                              'Agreement = (revisioni al rialzo − al ribasso)/(totale revisioni) ultimi 30 giorni, anno fiscale corrente.']):
         ws.cell(n0 + k, 1, txt).font = Font(name='Aptos', italic=True, color='4A5868')
