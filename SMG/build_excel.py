@@ -18,16 +18,17 @@ tk = list(port.ticker); n = len(tk); T0 = len(prices); T = T0 - 1
 SECTORS = sorted(port.settore.unique()); STYLES = ['Value', 'Growth', 'Momentum']
 
 # ---------- stili ----------
-NAVY, LIGHT, GREY = '1F3864', 'D9E1F2', 'F2F2F2'
-F_IN, F_LINK, F_CALC = Font(name='Calibri', color='0000FF'), Font(name='Calibri', color='008000'), Font(name='Calibri', color='000000')
-F_HEAD = Font(name='Calibri', bold=True, color='FFFFFF'); FILL_HEAD = PatternFill('solid', fgColor=NAVY)
-FILL_SUB = PatternFill('solid', fgColor=LIGHT); FILL_KEY = PatternFill('solid', fgColor='FFF2CC')
+NAVY, LIGHT, GREY = '0F1B2A', 'E6EAF1', 'F3F5F9'
+F_IN, F_LINK, F_CALC = Font(name='Aptos', color='2F5D85'), Font(name='Aptos', color='3C7A5A'), Font(name='Aptos', color='0F1B2A')
+F_HEAD = Font(name='Aptos', bold=True, color='FFFFFF'); FILL_HEAD = PatternFill('solid', fgColor=NAVY)
+FILL_SUB = PatternFill('solid', fgColor=LIGHT); FILL_KEY = PatternFill('solid', fgColor='DCE9F4')
 thin = Side(style='thin', color='BFBFBF'); BOX = Border(top=thin, bottom=thin, left=thin, right=thin)
 PCT, PCT4, NUM, USD, DATE = '0.00%', '0.0000%', '0.0000', '$#,##0.00', 'dd/mm/yyyy'
 
+PALETTE = ['0F1B2A', '3D6A8E', '9FC6E6', '5E809C', 'B08D57', '7FA38C', 'C26B5B', '8C8FA6']
 def title(ws, text, sub=None):
-    ws['A1'] = text; ws['A1'].font = Font(name='Calibri', bold=True, size=14, color=NAVY)
-    if sub: ws['A2'] = sub; ws['A2'].font = Font(name='Calibri', italic=True, color='595959')
+    ws['A1'] = text; ws['A1'].font = Font(name='Aptos Display', size=18, color=NAVY)
+    if sub: ws['A2'] = sub; ws['A2'].font = Font(name='Aptos Mono', size=9, color='4A5868')
     ws.sheet_view.showGridLines = False
 def head(ws, row, col, vals):
     for j, v in enumerate(vals):
@@ -64,12 +65,12 @@ SHEETS = [('Portafoglio', 'Composizione del portafoglio iniziale: azioni, prezzi
           ('Sharpe', 'Rendimenti mensili, annualizzazione e Sharpe ratio di portafoglio e mercato', '6.1.11, 6.1.12'),
           ('Controlli', 'Verifiche automatiche di coerenza (TRUE = ok)', '-')]
 for i, (s, d, sec) in enumerate(SHEETS):
-    c = put(ix, 5 + i, 1, s); c.hyperlink = f"#'{s}'!A1"; c.font = Font(color='0563C1', underline='single')
+    c = put(ix, 5 + i, 1, s); c.hyperlink = f"#'{s}'!A1"; c.font = Font(name='Aptos', color='3D6A8E', underline='single')
     put(ix, 5 + i, 2, d); put(ix, 5 + i, 3, sec)
-r = 6 + len(SHEETS); ix.cell(r, 1, 'Legenda colori').font = Font(bold=True)
+r = 6 + len(SHEETS); ix.cell(r, 1, 'Legenda colori').font = Font(name='Aptos', bold=True)
 for k, (txt, f) in enumerate([('Valore inserito (input / dato scaricato)', F_IN), ('Formula di calcolo', F_CALC), ('Collegamento ad altro foglio', F_LINK)]):
-    ix.cell(r + 1 + k, 1, 'Esempio 123').font = f; ix.cell(r + 1 + k, 2, txt)
-ix.cell(r + 5, 1, 'Fonte dati: Yahoo Finance (Adjusted Close). Indice di mercato: S&P 500 (^GSPC). Risk-free: T-bill 12 mesi, 4% annuo.').font = Font(italic=True)
+    ix.cell(r + 1 + k, 1, 'Esempio 123').font = Font(name='Aptos', color=f.color.rgb); ix.cell(r + 1 + k, 2, txt)
+ix.cell(r + 5, 1, 'Fonte dati: Yahoo Finance (Adjusted Close). Indice di mercato: S&P 500 (^GSPC). Risk-free: T-bill 12 mesi, 4% annuo.').font = Font(name='Aptos', italic=True)
 widths(ix, {'A': 16, 'B': 95, 'C': 22})
 
 # ======================= PORTAFOGLIO =======================
@@ -84,7 +85,7 @@ for i, rw in port.iterrows():
     put(pf, r, 7, int(rw.azioni), F_IN, '#,##0'); put(pf, r, 8, float(rw.prezzo_acquisto), F_IN, USD)
     put(pf, r, 9, f'=G{r}*H{r}', fmt=USD); put(pf, r, 10, f'=I{r}/$I${P1+1}', fmt=PCT); put(pf, r, 11, float(rw.peso_target), F_IN, PCT)
 tr = P1 + 1
-put(pf, tr, 1, 'Totale investito', fill=FILL_SUB).font = Font(bold=True)
+put(pf, tr, 1, 'Totale investito', fill=FILL_SUB).font = Font(name='Aptos', bold=True)
 put(pf, tr, 9, f'=SUM(I{P0}:I{P1})', fmt=USD, fill=FILL_SUB); put(pf, tr, 10, f'=SUM(J{P0}:J{P1})', fmt=PCT, fill=FILL_SUB)
 put(pf, tr + 2, 8, 'Capitale iniziale'); put(pf, tr + 2, 9, 1_000_000, F_IN, USD)
 put(pf, tr + 3, 8, 'Liquidità residua'); put(pf, tr + 3, 9, f'=I{tr+2}-I{tr}', fmt=USD)
@@ -146,7 +147,7 @@ names = tk + ['Portafoglio', 'SPX']; colmap = {**{t: 2 + j for j, t in enumerate
 ST0 = 5
 for i, nm in enumerate(names):
     r = ST0 + i; rg = RR(colmap[nm]); stock = i < n
-    put(st, r, 1, nm, F_CALC if not stock else F_LINK, fill=None if stock else FILL_SUB).font = Font(bold=not stock, color='000000' if not stock else '008000')
+    put(st, r, 1, nm, F_CALC if not stock else F_LINK, fill=None if stock else FILL_SUB).font = Font(name='Aptos', bold=not stock, color='0F1B2A' if not stock else '3C7A5A')
     if stock: put(st, r, 1, f'=Portafoglio!A{P0+i}', F_LINK); put(st, r, 2, f'=Portafoglio!C{P0+i}', F_LINK); put(st, r, 3, f'=Portafoglio!E{P0+i}', F_LINK)
     else:
         for cc in (2, 3): put(st, r, cc, '-', fill=FILL_SUB)
@@ -221,6 +222,7 @@ def line(ttl, cols_idx, anchor, w=24, h=10):
         s.tx = None; ch.series.append(s)
         from openpyxl.chart.series import SeriesLabel; from openpyxl.chart.data_source import StrRef
         s.tx = SeriesLabel(strRef=StrRef(f"'Base100'!${L(ci)}$3")); s.smooth = False; s.graphicalProperties.line.width = 15000
+        s.graphicalProperties.line.solidFill = PALETTE[len(ch.series) - 1 if False else (len(ch.series) - 1) % len(PALETTE)]
     ch.set_categories(Reference(bz, min_col=1, min_row=B0, max_row=BN)); ch.legend.position = 'b'
     lo, hi = YR(cols_idx); ch.y_axis.scaling.min, ch.y_axis.scaling.max = lo, hi; gr.add_chart(ch, anchor)
 import math
@@ -275,7 +277,7 @@ for j in range(n):
     put(cv, r, 7, f'=Statistiche!E{ST0+j}', F_LINK, PCT4); put(cv, r, 8, f'=IF(D{r}>1,"Più rischioso del mercato (aggressivo)",IF(D{r}<1,"Meno rischioso del mercato (difensivo)","Come il mercato"))')
 BE = b0 + n; rb = BE + 1
 put(cv, rb, 1, 'SPX', fill=FILL_SUB); put(cv, rb, 4, f'={mc}{CN}/{mc}{CN}', fmt='0.00', fill=FILL_SUB)
-put(cv, rb + 2, 1, 'BETA DI PORTAFOGLIO  β(p) = Σ w(i)·β(i)').font = Font(bold=True); put(cv, rb + 2, 4, f'=SUMPRODUCT(E{b0+1}:E{BE},D{b0+1}:D{BE})', fmt='0.00', fill=FILL_KEY)
+put(cv, rb + 2, 1, 'BETA DI PORTAFOGLIO  β(p) = Σ w(i)·β(i)').font = Font(name='Aptos', bold=True); put(cv, rb + 2, 4, f'=SUMPRODUCT(E{b0+1}:E{BE},D{b0+1}:D{BE})', fmt='0.00', fill=FILL_KEY)
 wb.defined_names['BetaPortafoglio'] = DefinedName('BetaPortafoglio', attr_text=f'Cov_Beta!$D${rb+2}')
 put(cv, rb + 3, 1, 'Rendimento medio giornaliero portafoglio'); put(cv, rb + 3, 4, f'=Statistiche!E{ST0+n}', F_LINK, PCT4)
 put(cv, rb + 4, 1, 'Rendimento medio giornaliero S&P 500'); put(cv, rb + 4, 4, f'=Statistiche!E{ST0+n+1}', F_LINK, PCT4)
@@ -328,7 +330,7 @@ rows_ = [('Rendimento medio mensile (aritm.)', f'=AVERAGE({pc}{r1+1}:{pc}{r1+4})
          ('Beta', '=BetaPortafoglio', 1, '0.00')]
 for i, (lab, a, b, fm) in enumerate(rows_):
     r = r2 + 1 + i; key = lab == 'SHARPE RATIO'
-    put(sh, r, 1, lab, fill=FILL_KEY if key else None).font = Font(bold=key)
+    put(sh, r, 1, lab, fill=FILL_KEY if key else None).font = Font(name='Aptos', bold=key)
     put(sh, r, 2, a, F_IN if isinstance(a, float) else (F_LINK if 'Statistiche' in str(a) or 'Beta' in str(a) else F_CALC), fm, FILL_KEY if key else None)
     put(sh, r, 3, b, F_LINK if 'Statistiche' in str(b) else F_CALC, fm, FILL_KEY if key else None)
 wb.defined_names['Rf'] = DefinedName('Rf', attr_text=f'Sharpe!$B${r2+5}')
@@ -366,7 +368,7 @@ def seltab(name, df, ttl, sub):
     for k, txt in enumerate(['Fonti: Yahoo Finance (multipli, ABR, revisioni e trend stime EPS, sorprese) al 23/11/2026; Zacks Rank da zacks.com.',
                              'Punteggio = 0,40·z(Agreement) + 0,25·z(Magnitude 60gg) + 0,20·z(−ABR) + 0,15·z(Upside target): replica i criteri Zacks (Agreement, Magnitude, Upside, Surprise).',
                              'Agreement = (revisioni al rialzo − al ribasso)/(totale revisioni) ultimi 30 giorni, anno fiscale corrente.']):
-        ws.cell(n0 + k, 1, txt).font = Font(italic=True, color='595959')
+        ws.cell(n0 + k, 1, txt).font = Font(name='Aptos', italic=True, color='4A5868')
     widths(ws, {'A': 8, 'B': 30, 'C': 22, 'D': 10}); ws.freeze_panes = 'C5'
     for j in range(5, len(SEL_COLS) + 2): ws.column_dimensions[L(j)].width = 11
     ws.row_dimensions[4].height = 45
@@ -422,12 +424,12 @@ for i, (a, b, c) in enumerate(checks):
     put(ck, 4 + i, 1, a); put(ck, 4 + i, 2, b, F_LINK, '0.0000'); put(ck, 4 + i, 3, c, fill=FILL_SUB)
 ck.conditional_formatting.add(f'C4:C{3+len(checks)}', CellIsRule(operator='equal', formula=['TRUE'], fill=PatternFill('solid', fgColor='C6EFCE')))
 ck.conditional_formatting.add(f'C4:C{3+len(checks)}', CellIsRule(operator='equal', formula=['FALSE'], fill=PatternFill('solid', fgColor='FFC7CE')))
-put(ck, 5 + len(checks), 1, 'TUTTI I CONTROLLI SUPERATI', fill=FILL_KEY).font = Font(bold=True); put(ck, 5 + len(checks), 3, f'=AND(C4:C{3+len(checks)})', fill=FILL_KEY)
+put(ck, 5 + len(checks), 1, 'TUTTI I CONTROLLI SUPERATI', fill=FILL_KEY).font = Font(name='Aptos', bold=True); put(ck, 5 + len(checks), 3, f'=AND(C4:C{3+len(checks)})', fill=FILL_KEY)
 widths(ck, {'A': 44, 'B': 14, 'C': 12})
 
 order_ = ['Indice', 'Portafoglio', 'Selezione', 'Watchlist', 'Ordini', 'Registro_Operazioni']
 wb._sheets = [wb[x] for x in order_] + [w for w in wb._sheets if w.title not in order_]
-for ws in wb.worksheets: ws.sheet_properties.tabColor = {'Indice': NAVY, 'Controlli': '70AD47'}.get(ws.title, '8EA9DB')
+for ws in wb.worksheets: ws.sheet_properties.tabColor = {'Indice': NAVY, 'Controlli': '3C7A5A'}.get(ws.title, '5E809C')
 for ws in wb.worksheets:
     for ch in ws._charts:
         for ax in ('x_axis', 'y_axis'):

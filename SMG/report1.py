@@ -23,17 +23,17 @@ BG = {'CVX': 'Second-largest US integrated oil major', 'VLO': 'Largest independe
 SHORT = {'Financial Services': 'Financials', 'Communication Services': 'Communication', 'Basic Materials': 'Materials', 'Consumer Cyclical': 'Cons. Discr.'}
 
 ss = getSampleStyleSheet()
-H1 = ParagraphStyle('h1', parent=ss['Title'], fontSize=15, spaceAfter=2, textColor=colors.HexColor('#1F3864'))
-H2 = ParagraphStyle('h2', parent=ss['Heading2'], fontSize=11, spaceBefore=7, spaceAfter=3, textColor=colors.HexColor('#1F3864'))
+H1 = ParagraphStyle('h1', parent=ss['Title'], fontSize=15, spaceAfter=2, textColor=colors.HexColor('#0F1B2A'))
+H2 = ParagraphStyle('h2', parent=ss['Heading2'], fontSize=11, spaceBefore=7, spaceAfter=3, textColor=colors.HexColor('#3D6A8E'))
 B = ParagraphStyle('b', parent=ss['BodyText'], fontSize=9, leading=11.5, alignment=4, spaceAfter=3)
-SM = ParagraphStyle('sm', parent=B, fontSize=7, leading=8.5, textColor=colors.HexColor('#404040'))
+SM = ParagraphStyle('sm', parent=B, fontSize=7, leading=8.5, textColor=colors.HexColor('#4A5868'))
 TC = ParagraphStyle('tc', parent=B, fontSize=7, leading=8, alignment=0, spaceAfter=0)
 def table(data, widths, num_from=None):
     t = Table(data, colWidths=widths, repeatRows=1)
     st = [('FONT', (0, 0), (-1, -1), 'Helvetica', 7), ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold', 7),
-          ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F3864')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-          ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#EEF2F8')]),
-          ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#BFBFBF')), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+          ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0F1B2A')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+          ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#EEF0F6')]),
+          ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#D3D9E2')), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
           ('TOPPADDING', (0, 0), (-1, -1), 1.2), ('BOTTOMPADDING', (0, 0), (-1, -1), 1.2)]
     if num_from is not None: st.append(('ALIGN', (num_from, 1), (-1, -1), 'RIGHT'))
     t.setStyle(TableStyle(st)); return t

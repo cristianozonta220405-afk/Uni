@@ -72,7 +72,7 @@ def slide(dark, tag, num, bgimg=None, cubes=False):
     s = prs.slides.add_slide(BL)
     pic(s, bgimg or ('assets/bg_dark.png' if dark else 'assets/bg_light.png'), 0, 0, 33.867, 19.05)
     if cubes: pic(s, 'assets/cubes.png', 25.6, -1.0, 8.6, 8.6)
-    pill(s, M, 1.5, tag, num, dark)
+    pill(s, M, 1.5, tag, f'{len(prs.slides):02d}', dark)
     T(s, M, 18.0, 15, 0.5, f'{GROUP}  /  Stock Market Game 2026', 7.5, MUTED_D if dark else INK2, MONO)
     T(s, 33.867 - M - 3, 18.0, 3, 0.5, f'{len(prs.slides):02d}', 7.5, MUTED_D if dark else INK2, MONO, PP_ALIGN.RIGHT)
     return s
@@ -129,7 +129,7 @@ for i, (h_, b_) in enumerate(items):
 
 # ================= 04 metodo =================
 s = slide(False, 'Method', '04', cubes=True)
-title(s, M, 2.9, 20, [[('Rebuilding the ', False), ('Zacks Rank', True)], [('for 151 US large caps', False)]], 32)
+title(s, M, 2.9, 20, [[('How we picked ', False), ('the stocks', True)], [('Zacks criteria on 151 US large caps', False)]], 32)
 crit = [('40%', 'Agreement', 'Share of upward EPS revisions in the last 30 days; Zacks weighs it most'), ('25%', 'Magnitude', 'Change in the consensus EPS estimate over 60 days'),
         ('20%', 'Broker opinion', 'Average Broker Recommendation, 1 = Strong Buy'), ('15%', 'Upside', 'Analysts\' price target against the current price'), ('Check', 'Surprise', 'Average EPS surprise over the last four quarters')]
 for i, (wgt, h_, b_) in enumerate(crit):
@@ -142,7 +142,7 @@ for i, (v, l) in enumerate(fun):
     rect(s, x_, y_, 5.55, 4.95, BLACK if i == 2 else RGBColor(0xFA,0xFB,0xFD), None, 0.07)
     T(s, x_ + 0.5, y_ + 0.6, 4.6, 1.6, v, 36, WHITE if i == 2 else INK, HEAD)
     T(s, x_ + 0.5, y_ + 3.3, 4.6, 1.4, l, 8.5, MUTED_D if i == 2 else INK2, MONO, spacing=1.05)
-T(s, M, 17.4, 30, 0.4, 'Score = 0.40 z(Agreement) + 0.25 z(Magnitude) + 0.20 z(-ABR) + 0.15 z(Upside). The signal works over a short horizon and favours smaller companies and fashionable industries.', 7, INK2, MONO)
+T(s, M, 17.4, 30, 0.4, 'Then we checked the price: forward P/E, P/B and PEG (slide 8). Limit: the signal works over a short horizon of one to three months.', 7.5, INK2, MONO)
 
 # ================= 05 regole =================
 s = slide(True, 'Screening', '05', bgimg='assets/bg_dark2.png')
@@ -182,7 +182,7 @@ T(s, xs[6] + 0.25, yy + 0.15, cwid[6] - 0.5, 0.45, f'{INV:.1%}', 8.5, INK, MONO,
 
 # ================= 07 diversificazione =================
 s = slide(False, 'Diversification', '07', cubes=True)
-title(s, M, 2.9, 20, [[('Seven sectors, ', False), ('none above 25%', True)]], 32)
+title(s, M, 2.9, 22, [[('Weights and ', False), ('diversification', True)]], 32)
 sec = p.groupby('settore').w.sum().sort_values(ascending=False); styw = p.groupby('stile').w.sum().reindex(['Value', 'Growth', 'Momentum'])
 rect(s, M, 6.0, 18.4, 11.4, RGBColor(0xFA,0xFB,0xFD), None, 0.04); rect(s, M + 18.9, 6.0, 33.867 - 2*M - 18.9, 11.4, BLACK, None, 0.04)
 T(s, M + 0.6, 6.5, 10, 0.4, 'Weight by sector', 7.5, INK2, MONO); T(s, M + 19.5, 6.5, 10, 0.4, 'Weight by style', 7.5, MUTED_D, MONO)
@@ -199,11 +199,11 @@ for i, c in enumerate([RGBColor(0x9F,0xC6,0xE6), RGBColor(0x5E,0x80,0x9C), RGBCo
 for i, (nm, v) in enumerate(styw.items()):
     yy = 7.6 + i * 2.0; rect(s, M + 26.6, yy + 0.18, 0.4, 0.4, [RGBColor(0x9F,0xC6,0xE6), RGBColor(0x5E,0x80,0x9C), RGBColor(0xE8,0xEE,0xF3)][i], None, 0.2)
     T(s, M + 27.3, yy, 3, 0.6, nm, 11, WHITE, HEAD); T(s, M + 27.3, yy + 0.65, 3, 0.5, f'{v:.0%}', 9, MUTED_D, MONO)
-T(s, M + 19.5, 14.5, 10.5, 2.6, 'Technology is 19% of the portfolio against about 33% of the S&P 500. Energy offsets an oil shock; healthcare holds up in a slowdown.', 9, WHITE, MONO, spacing=1.15)
+T(s, M + 19.5, 14.2, 10.5, 2.9, f'Weights by conviction: 5% plus or minus 2.5 points with the score, from {p.w.min():.1%} to {p.w.max():.1%}. Equal weights would ignore the signal; value weights would load up on the largest tech names.', 8.5, WHITE, MONO, spacing=1.15)
 
 # ================= 08 profilo valutativo (bento) =================
 s = slide(False, 'Valuation', '08')
-title(s, M, 2.9, 22, [[('What we pay, ', False), ('what we get', True)]], 32)
+title(s, M, 2.9, 22, [[('Selection parameters, ', False), ('portfolio medians', True)]], 32)
 up = p.rev_su_30g.sum() / (p.rev_su_30g.sum() + p.rev_giu_30g.sum())
 k = [(f'{p.PE_fwd.median():.1f}x', 'median forward P/E', 'S&P 500 at 21.5x'), (f'{up:.0%}', 'of EPS revisions in the last 30 days are upward', None),
      (f'{p.ABR.median():.2f}', 'median broker rating', '1 = Strong Buy'), (f'+{p["surprise_4q_%"].median():.1f}%', 'median EPS surprise, last four quarters', None)]
@@ -213,16 +213,41 @@ for (v, l, sub), (x_, y_, w_, h_) in zip(k, pos):
     T(s, x_ + 0.55, y_ + 0.6, w_ - 1.1, 1.6, v, 34, INK, HEAD)
     T(s, x_ + 0.55, y_ + h_ - 1.75, w_ - 1.1, 1.2, l, 8.5, INK2, MONO, spacing=1.05)
     if sub: T(s, x_ + 0.55, y_ + 2.35, w_ - 1.1, 0.5, sub, 8, ACC_L, MONO)
-card(s, M + 6.6, 6.0, 11.1, 11.4, 'imgdark', 'Cheap and\nimproving', None, hsize=30)
+card(s, M + 6.6, 6.0, 11.1, 11.4, 'imgdark', 'Lower price,\nrising estimates', None, hsize=28)
 T(s, M + 7.15, 6.6, 10, 0.5, 'Portfolio profile', 7.5, WHITE, MONO)
 x_ = M + 24.5; w_ = 33.867 - M - x_
 rect(s, x_, 6.0, w_, 11.4, BLACK, None, 0.04)
 T(s, x_ + 0.55, 6.6, w_ - 1.1, 0.5, 'Reading', 7.5, MUTED_D, MONO)
-T(s, x_ + 0.55, 10.6, w_ - 1.1, 6, 'Analysts raised estimates on almost every holding in the last month, and the companies beat their recent forecasts. We pay about 13 times expected earnings for that.', 10, WHITE, HEAD, spacing=1.1)
+T(s, x_ + 0.55, 10.6, w_ - 1.1, 6, 'Analysts are raising estimates on almost all our stocks, and we pay about 13 times expected earnings, against 21.5 for the S&P 500.', 10, WHITE, HEAD, spacing=1.1)
+
+# ================= watch list (D) =================
+s = slide(False, 'Watch list', '09', cubes=True)
+title(s, M, 2.9, 20, [[('Monitoring list', False)], [('25 stocks, same screen', True)]], 32)
+wl = [('Energy', 'OXY  COP  PSX'), ('Technology', 'ANET  AMD  NVDA  AVGO  KLAC  TXN'), ('Industrials and power', 'GEV  ETN  CEG  PH  RTX'),
+      ('Healthcare', 'CVS  CI  TMO  ISRG  HCA'), ('Financials', 'AIG  MET  CB  TRV  V'), ('Consumer', 'ORLY')]
+for i, (h_, b_) in enumerate(wl):
+    x_ = M + (i % 3) * (cw + 0.5); y_ = 7.2 + (i // 3) * 4.4
+    rect(s, x_, y_, cw, 4.0, BLACK if i == 1 else RGBColor(0xFA,0xFB,0xFD), None, 0.07)
+    T(s, x_ + 0.6, y_ + 0.5, cw - 1.2, 0.4, f'{i+1:02d}', 7.5, MUTED_D if i == 1 else INK2, MONO)
+    T(s, x_ + 0.6, y_ + 1.2, cw - 1.2, 0.8, h_, 16, WHITE if i == 1 else INK, HEAD)
+    T(s, x_ + 0.6, y_ + 2.5, cw - 1.2, 1.0, b_, 11, ACC_D if i == 1 else ACC_L, MONO)
+T(s, M, 16.3, 30, 1, 'Selected with the same parameters as the portfolio. We use them to replace holdings whose estimates start to be cut. The full table is in the report and in the Excel file.', 9, INK2, MONO, spacing=1.1)
+
+# ================= trading =================
+s = slide(True, 'Trading', '10', bgimg='assets/bg_dark2.png')
+title(s, M, 2.9, 13.5, [[('Trading until', False)], [('18 December', True)]], 36, True)
+T(s, M, 14.2, 12.5, 3, 'Game rules: at least 5 trades, 10 to 30 stocks at all times, no short selling or margin.', 10, WHITE, MONO, spacing=1.15)
+rules = [('Sell', 'a stock when analysts start cutting its estimates'), ('Replace', 'it with the best stock of the same style from the watch list'),
+         ('Trim', 'any position that grows above 10% of the portfolio'), ('Spread', 'the trades over the period, not all in the last days')]
+for i, (h_, b_) in enumerate(rules):
+    y_ = 2.9 + i * 3.7; rect(s, x0, y_, w0, 3.4, RGBColor(0x0B,0x15,0x22), RGBColor(0xFF,0xFF,0xFF), 0.08, a=0.5, la=0.16)
+    T(s, x0 + 0.6, y_ + 0.45, 8, 0.4, f'{i+1:02d}', 7.5, MUTED_D, MONO)
+    T(s, x0 + 0.6, y_ + 1.0, w0 - 1.2, 0.9, h_, 18, WHITE, HEAD)
+    T(s, x0 + 0.6, y_ + 2.05, w0 - 1.2, 1, b_, 9.5, MUTED_D, MONO)
 
 # ================= 09 back-test =================
 s = slide(True, 'Back-test', '09')
-title(s, M, 2.9, 22, [[('July to October 2026, ', False)], [('same weights', True)]], 34, True)
+title(s, M, 2.9, 22, [[('First analysis: ', False)], [('July to October 2026', True)]], 34, True)
 T(s, 33.867 - M - 12, 5.0, 12, 0.5, 'Daily dividend-adjusted closes, S&P 500 as the market, risk-free rate 4%', 8, MUTED_D, MONO, PP_ALIGN.RIGHT)
 vals = [(f'{BT["hpr"]:+.1%}', 'portfolio holding-period return', True), (f'{BT["spx"]:+.1%}', 'S&P 500 holding-period return', False), (f'{BT["sh"]:.2f}', 'portfolio Sharpe ratio', True),
         (f'{BT["shm"]:.2f}'.replace('-', '−'), 'S&P 500 Sharpe ratio', False), (f'{BT["beta"]:.2f}', 'portfolio beta', False), (f'{BT["corr"]:.2f}', 'average correlation between pairs of stocks', False)]
@@ -232,43 +257,12 @@ for i, (v, l, hl) in enumerate(vals):
     rect(s, x_, y_, gw, 3.3, RGBColor(0x0B,0x15,0x22), RGBColor(0xFF,0xFF,0xFF), 0.07, a=0.45, la=0.16)
     T(s, x_ + 0.6, y_ + 0.45, gw - 1.2, 1.6, v, 32, ACC_D if hl else WHITE, HEAD); T(s, x_ + 0.6, y_ + 2.3, gw - 1.2, 0.6, l, 8.5, MUTED_D, MONO)
 rect(s, M, 14.15, 33.867 - 2*M, 3.2, BLACK, None, 0.08, a=0.6)
-T(s, M + 0.6, 14.6, 10, 0.4, 'Look-ahead bias', 7.5, ACC_D, MONO)
-T(s, M + 0.6, 15.2, 29.5, 1.8, 'We picked the stocks with momentum and revisions measured in November, which partly reflect July to October. The back-test therefore overstates the strategy; the trading period from 24/11 to 18/12 is the real test.', 9.5, WHITE, MONO, spacing=1.15)
-
-# ================= 10 piano di trading =================
-s = slide(False, 'Trading plan', '10', cubes=True)
-title(s, M, 2.9, 20, [[('From 24 November', False)], [('to 18 December', True)]], 32)
-rules = [('Sell', 'when estimates start to be cut (Agreement below 0) or the Zacks Rank falls to 4 or 5'), ('Reduce', 'after a 10% fall that the market does not explain'),
-         ('Trim', 'any position above 10% of the portfolio'), ('Replace', 'with the best-scoring watch-list stock of the same style'), ('Spread', 'at least five trades over the period, so their effect can be measured')]
-for i, (h_, b_) in enumerate(rules):
-    y_ = 7.4 + i * 2.0; rect(s, M, y_, 16.6, 1.8, BLACK if i == 0 else RGBColor(0xFA,0xFB,0xFD), None, 0.12)
-    T(s, M + 0.55, y_ + 0.3, 3, 0.4, f'{i+1:02d} rule', 7, MUTED_D if i == 0 else INK2, MONO)
-    T(s, M + 0.55, y_ + 0.75, 3.4, 0.8, h_, 15, WHITE if i == 0 else INK, HEAD)
-    T(s, M + 4.3, y_ + 0.45, 11.8, 1.2, b_, 9, MUTED_D if i == 0 else INK2, MONO, anchor=MSO_ANCHOR.MIDDLE, spacing=1.05)
-x_ = M + 17.1; w_ = 33.867 - M - x_
-pic(s, 'assets/card_grad.png', x_, 7.4, w_, 9.8, rounded=0.04)
-T(s, x_ + 0.6, 7.95, w_ - 1.2, 0.4, 'Watch list, 25 stocks', 7.5, WHITE, MONO)
-wl = [('Oil upside', 'OXY  COP  PSX'), ('AI rebound', 'ANET  AMD  NVDA  AVGO  KLAC  TXN'), ('Grid and power', 'GEV  ETN  CEG'), ('Defensive health', 'CVS  CI  TMO  ISRG  HCA'), ('Rates and insurance', 'AIG  MET  CB  TRV  V'), ('Others', 'PH  RTX  ORLY')]
-for i, (h_, b_) in enumerate(wl):
-    yy = 9.0 + i * 1.32; T(s, x_ + 0.6, yy, 5.2, 0.6, h_, 11.5, WHITE, HEAD); T(s, x_ + 6.0, yy + 0.1, w_ - 6.6, 0.6, b_, 9, RGBColor(0xEE,0xF3,0xF7), MONO)
-
-# ================= 11 rischi =================
-s = slide(True, 'Risks', '11', bgimg='assets/bg_dark2.png')
-title(s, M, 2.9, 12.5, [[('What could', False)], [('go wrong', True)]], 36, True)
-rk = [('Oil price collapse after a peace deal', 'Energy is 19% of the portfolio. Refiners depend less on crude prices, and we did not buy OXY or COP.'),
-      ('More Fed hikes', 'Our multiples are low, banks earn more with higher rates, and we hold no utilities or REITs.'),
-      ('A deeper fall in AI and chip stocks', 'Three technology stocks, 19% of the portfolio. MU cost about 3 times expected earnings.'),
-      ('Policy risk for health insurers', 'Healthcare capped at 25%, split between insurers, biotech, drug distribution and lab tools.'),
-      ('Model risk', 'Revisions are a short-term signal. We check them weekly and rely on valuation and diversification too.')]
-for i, (h_, b_) in enumerate(rk):
-    y_ = 2.9 + i * 2.97; rect(s, x0, y_, w0, 2.72, RGBColor(0x0B,0x15,0x22), RGBColor(0xFF,0xFF,0xFF), 0.08, a=0.5, la=0.16)
-    T(s, x0 + 0.55, y_ + 0.35, 8, 0.4, f'{i+1:02d}', 7.5, MUTED_D, MONO)
-    T(s, x0 + 0.55, y_ + 0.85, w0 - 1.1, 0.7, h_, 14, WHITE, HEAD)
-    T(s, x0 + 0.55, y_ + 1.6, w0 - 1.1, 1, b_, 8.5, MUTED_D, MONO, spacing=1.05)
+T(s, M + 0.6, 14.6, 10, 0.4, 'Note', 7.5, ACC_D, MONO)
+T(s, M + 0.6, 15.2, 29.5, 1.8, 'This is the initial portfolio tested on the four months before the game, as the assignment asks (section 6.1). Part of the selection data comes from the same period, so the result looks better than it would in real time.', 9.5, WHITE, MONO, spacing=1.15)
 
 # ================= 12 formule =================
 s = slide(False, 'Excel', '12')
-title(s, M, 2.9, 22, [[('The formulas ', False), ('behind the Excel', True)]], 32)
+title(s, M, 2.9, 22, [[('Formulas used ', False), ('in the Excel file', True)]], 32)
 fm = [('Daily return', 'r(t) = (P(t) − P(t−1)) / P(t−1)'), ('Portfolio return', 'R(p,t) = Σ w(i) · r(i,t)'), ('Geometric mean and HPR', '[Π(1 + r(t))]^(1/T) − 1     HPR = Π(1 + r(t)) − 1'),
       ('Risk', 'sample variance VAR.S, standard deviation STDEV.S'), ('Beta', 'β(i) = Cov(r(i), R(m)) / Var(R(m))     β(p) = Σ w(i) · β(i)'), ('Sharpe ratio', '(R(annual) − Rf) / σ(annual)     R(annual) = (1 + R(monthly))^12 − 1     σ(annual) = σ(daily) · √250')]
 fw = (33.867 - 2*M - 0.5) / 2
