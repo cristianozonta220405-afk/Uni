@@ -1,140 +1,281 @@
-"""Presentazione della strategia SMG (pptx) per l'orale di gennaio."""
-import os, pandas as pd
+"""Presentazione strategia SMG - stile 'steel blue / pixel' (riferimento grafico dell'utente)."""
+import os, numpy as np, pandas as pd
 from pptx import Presentation
-from pptx.util import Cm, Pt
+from pptx.util import Cm, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.chart.data import CategoryChartData
-from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION, XL_LABEL_POSITION
+from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.oxml.ns import qn
+from lxml import etree
+
 GROUP = os.environ.get('SMG_GROUP', 'ZZ Capital')
-NAVY, BLUE, GOLD, GREY, RED, GREEN = RGBColor(0x1F,0x38,0x64), RGBColor(0x2E,0x75,0xB6), RGBColor(0xC9,0x8B,0x1E), RGBColor(0x59,0x59,0x59), RGBColor(0xC0,0x39,0x2B), RGBColor(0x2E,0x8B,0x57)
-p = pd.read_csv('dati/portafoglio_iniziale.csv'); p['cv'] = p.azioni*p.prezzo_acquisto; p['w'] = p.cv/p.cv.sum()
-import numpy as np
+p = pd.read_csv('dati/portafoglio_iniziale.csv'); p['cv'] = p.azioni*p.prezzo_acquisto; p['w'] = p.cv/p.cv.sum(); INV = p.cv.sum()/1e6
 _px = pd.read_csv('dati/prezzi_lug_ott.csv', index_col=0, parse_dates=True); _r = _px.pct_change().dropna()
 _wv = pd.Series(p.w.values, index=p.ticker); _rp = _r[p.ticker] @ _wv
-def _sh(rd, mprices):
-    m = mprices.resample('ME').last(); rm = m.pct_change().dropna().mean(); return ((1+rm)**12-1-0.04)/(rd.std()*np.sqrt(250))
-_mp = (_px[p.ticker].resample('ME').last().pct_change().dropna() @ _wv)
-BT = dict(hpr=(1+_rp).prod()-1, spx=(1+_r.SPX).prod()-1, sh=((1+_mp.mean())**12-1-0.04)/(_rp.std()*np.sqrt(250)), shm=_sh(_r.SPX, _px.SPX),
-          beta=float(sum(_wv[t]*_r[t].cov(_r.SPX) for t in p.ticker)/_r.SPX.var()), corr=(_r[p.ticker].corr().values.sum()-len(p))/(len(p)*(len(p)-1)))
-INV = p.cv.sum()/1e6
+_mp = _px[p.ticker].resample('ME').last().pct_change().dropna() @ _wv
+_mm = _px.SPX.resample('ME').last().pct_change().dropna()
+BT = dict(hpr=(1+_rp).prod()-1, spx=(1+_r.SPX).prod()-1, sh=((1+_mp.mean())**12-1-0.04)/(_rp.std()*np.sqrt(250)),
+          shm=((1+_mm.mean())**12-1-0.04)/(_r.SPX.std()*np.sqrt(250)), beta=float(sum(_wv[t]*_r[t].cov(_r.SPX) for t in p.ticker)/_r.SPX.var()),
+          corr=(_r[p.ticker].corr().values.sum()-len(p))/(len(p)*(len(p)-1)))
 SHORT = {'Financial Services': 'Financials', 'Communication Services': 'Communication', 'Basic Materials': 'Materials'}
-prs = Presentation(); prs.slide_width, prs.slide_height = Cm(33.867), Cm(19.05); BL = prs.slide_layouts[6]
-def tx(s, x, y, w, h, text, size=16, bold=False, color=GREY, align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP):
+
+# ---------------- stile ----------------
+HEAD, BODY, MONO = 'Aptos Display', 'Aptos', 'Aptos Mono'
+INK, INK2, WHITE = RGBColor(0x0F,0x1B,0x2A), RGBColor(0x4A,0x58,0x68), RGBColor(0xF2,0xF5,0xF8)
+MUTED_D, ACC_D, ACC_L = RGBColor(0xA9,0xBC,0xCB), RGBColor(0x9F,0xC6,0xE6), RGBColor(0x3D,0x6A,0x8E)
+BLACK = RGBColor(0x0B,0x0F,0x14); LINE_L = RGBColor(0xC9,0xD0,0xDB)
+SW, SH = Cm(33.867), Cm(19.05); M = 1.9  # margine
+prs = Presentation(); prs.slide_width, prs.slide_height = SW, SH; BL = prs.slide_layouts[6]
+
+def alpha(shape_fill_el, a):
+    """Imposta trasparenza (a = opacità 0-1) sul solidFill dello shape."""
+    sf = shape_fill_el.find(qn('a:solidFill')); clr = sf[0]
+    for old in clr.findall(qn('a:alpha')): clr.remove(old)
+    e = etree.SubElement(clr, qn('a:alpha')); e.set('val', str(int(a*100000)))
+def T(s, x, y, w, h, text, size=14, color=INK, font=BODY, align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, spacing=1.0, after=0, bold=False):
     tb = s.shapes.add_textbox(Cm(x), Cm(y), Cm(w), Cm(h)); tf = tb.text_frame; tf.word_wrap = True; tf.vertical_anchor = anchor
-    for i, line in enumerate(text if isinstance(text, list) else [text]):
-        para = tf.paragraphs[0] if i == 0 else tf.add_paragraph(); para.alignment = align
-        r = para.add_run(); r.text = line; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; r.font.name = 'Calibri'; para.space_after = Pt(6)
+    tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
+    lines = text if isinstance(text, list) else [text]
+    for i, line in enumerate(lines):
+        para = tf.paragraphs[0] if i == 0 else tf.add_paragraph(); para.alignment = align; para.line_spacing = spacing; para.space_after = Pt(after)
+        parts = line if isinstance(line, list) else [(line, color)]
+        for txt, c in parts:
+            r = para.add_run(); r.text = txt; f = r.font; f.size = Pt(size); f.color.rgb = c; f.name = font; f.bold = bold
     return tb
-def slide(title, sub=None):
-    s = prs.slides.add_slide(BL); bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, Cm(2.6)); bar.fill.solid(); bar.fill.fore_color.rgb = NAVY; bar.line.fill.background()
-    tx(s, 1.2, 0.45, 30, 1.6, title, 26, True, RGBColor(255,255,255), anchor=MSO_ANCHOR.MIDDLE)
-    if sub: tx(s, 1.2, 2.9, 31, 1, sub, 14, False, BLUE)
-    tx(s, 1.2, 18.0, 25, 0.8, f'Stock Market Game 2026  |  {GROUP}', 9, color=GREY); tx(s, 30.5, 18.0, 2.5, 0.8, str(len(prs.slides)), 9, color=GREY, align=PP_ALIGN.RIGHT)
+def rect(s, x, y, w, h, fill=None, line=None, radius=0.06, a=None, la=None, shape=MSO_SHAPE.ROUNDED_RECTANGLE):
+    sh = s.shapes.add_shape(shape, Cm(x), Cm(y), Cm(w), Cm(h))
+    if shape == MSO_SHAPE.ROUNDED_RECTANGLE: sh.adjustments[0] = radius
+    if fill is None: sh.fill.background()
+    else:
+        sh.fill.solid(); sh.fill.fore_color.rgb = fill
+        if a is not None: alpha(sh._element.spPr, a)
+    if line is None: sh.line.fill.background()
+    else:
+        sh.line.color.rgb = line; sh.line.width = Pt(0.75)
+        if la is not None: alpha(sh._element.spPr.find(qn('a:ln')), la)
+    sh.shadow.inherit = False; sh.text_frame.text = ''
+    return sh
+def pic(s, path, x, y, w, h, rounded=None):
+    pc = s.shapes.add_picture(path, Cm(x), Cm(y), Cm(w), Cm(h))
+    if rounded is not None: pc.auto_shape_type = MSO_SHAPE.ROUNDED_RECTANGLE; pc._element.spPr.find(qn('a:prstGeom')).find(qn('a:avLst')).append(etree.fromstring(f'<a:gd xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="adj" fmla="val {int(rounded*100000)}"/>'))
+    return pc
+def pill(s, x, y, label, num, dark):
+    c = WHITE if dark else INK
+    w = 0.35 + len(label) * 0.2 + 0.9
+    rect(s, x, y, w, 0.62, None, WHITE if dark else INK2, 0.5, la=0.5 if dark else 0.6)
+    T(s, x + 0.3, y + 0.12, w - 1, 0.4, label, 8, c, MONO)
+    rect(s, x + w - 0.62, y + 0.08, 0.46, 0.46, WHITE if dark else INK, None, 0.2)
+    T(s, x + w - 0.62, y + 0.15, 0.46, 0.35, num, 7, INK if dark else WHITE, MONO, PP_ALIGN.CENTER)
+def slide(dark, tag, num, bgimg=None, cubes=False):
+    s = prs.slides.add_slide(BL)
+    pic(s, bgimg or ('assets/bg_dark.png' if dark else 'assets/bg_light.png'), 0, 0, 33.867, 19.05)
+    if cubes: pic(s, 'assets/cubes.png', 25.6, -1.0, 8.6, 8.6)
+    pill(s, M, 1.5, tag, num, dark)
+    T(s, M, 18.0, 15, 0.5, f'{GROUP}  /  Stock Market Game 2026', 7.5, MUTED_D if dark else INK2, MONO)
+    T(s, 33.867 - M - 3, 18.0, 3, 0.5, f'{len(prs.slides):02d}', 7.5, MUTED_D if dark else INK2, MONO, PP_ALIGN.RIGHT)
     return s
-def card(s, x, y, w, h, head, body, col=BLUE, size=13):
-    b = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Cm(x), Cm(y), Cm(w), Cm(h)); b.fill.solid(); b.fill.fore_color.rgb = RGBColor(0xF2,0xF5,0xFA); b.line.color.rgb = col; b.adjustments[0] = 0.06
-    tx(s, x + 0.4, y + 0.3, w - 0.8, 1.2, head, 15, True, col); tx(s, x + 0.4, y + 1.4, w - 0.8, h - 1.6, body, size)
-def kpi(s, x, y, w, val, lab, col=NAVY):
-    tx(s, x, y, w, 1.8, val, 34, True, col, PP_ALIGN.CENTER); tx(s, x, y + 1.9, w, 1.2, lab, 12, False, GREY, PP_ALIGN.CENTER)
+def title(s, x, y, w, parts, size=34, dark=False):
+    base = WHITE if dark else INK; acc = ACC_D if dark else ACC_L
+    lines = []
+    for line in parts: lines.append([(t, acc if hl else base) for t, hl in line])
+    return T(s, x, y, w, 4, lines, size, base, HEAD, spacing=0.95)
+def card(s, x, y, w, h, kind, head, body, num=None, hsize=19, bsize=9.5):
+    if kind == 'grad': pic(s, 'assets/card_grad.png', x, y, w, h, rounded=0.05); hc, bc, ic = WHITE, RGBColor(0xDD,0xE6,0xEE), WHITE
+    elif kind == 'imgdark': pic(s, 'assets/card_dark.png', x, y, w, h, rounded=0.05); hc, bc, ic = WHITE, RGBColor(0xDD,0xE6,0xEE), WHITE
+    elif kind == 'black': rect(s, x, y, w, h, BLACK, None, 0.05); hc, bc, ic = WHITE, MUTED_D, WHITE
+    elif kind == 'white': rect(s, x, y, w, h, RGBColor(0xFA,0xFB,0xFD), None, 0.05); hc, bc, ic = INK, INK2, INK
+    elif kind == 'glass': rect(s, x, y, w, h, RGBColor(0xFF,0xFF,0xFF), RGBColor(0xFF,0xFF,0xFF), 0.06, a=0.07, la=0.18); hc, bc, ic = WHITE, MUTED_D, WHITE
+    if num:
+        rect(s, x + 0.55, y + 0.55, 0.75, 0.75, RGBColor(0xFF,0xFF,0xFF) if kind != 'white' else INK, None, 0.2, a=0.18 if kind != 'white' else None)
+        T(s, x + 0.55, y + 0.72, 0.75, 0.4, num, 8, ic if kind != 'white' else WHITE, MONO, PP_ALIGN.CENTER)
+    BODY_H = 1.9 if body else 0
+    head_lines = head.count('\n') + 1; head_h = hsize * 0.036 * head_lines
+    T(s, x + 0.55, y + h - 0.6 - BODY_H - 0.5 - head_h, w - 1.1, head_h + 0.3, head.split('\n'), hsize, hc, HEAD, spacing=0.95)
+    if body: T(s, x + 0.55, y + h - 0.6 - BODY_H, w - 1.1, BODY_H, body, bsize, bc, MONO, spacing=1.08)
 
-# 1 titolo
-s = prs.slides.add_slide(BL); bg = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height); bg.fill.solid(); bg.fill.fore_color.rgb = NAVY; bg.line.fill.background()
-tx(s, 2, 5, 30, 2.5, 'Buying rising earnings estimates', 44, True, RGBColor(255,255,255))
-tx(s, 2, 7.8, 30, 1.5, 'Our strategy for the Stock Market Game 2026', 22, False, RGBColor(0xD9,0xE1,0xF2))
-tx(s, 2, 11.5, 30, 3, [f'Group: {GROUP}', 'Cristiano Zonta (909123) and Mattia Zanrosso (909945)', 'Corporate Finance and Financial Institutions 2'], 16, False, RGBColor(0xD9,0xE1,0xF2))
+# ================= 01 copertina =================
+s = slide(True, 'ZZ Capital', '01')
+title(s, M, 6.2, 22, [[('Buying ', False), ('rising earnings', True)], [('estimates at a fair price', False)]], 46, True)
+T(s, M, 10.6, 18, 1, 'Our strategy for the Stock Market Game 2026', 15, MUTED_D, BODY)
+T(s, M, 15.2, 10, 1.6, ['Cristiano Zonta  909123  (spokesperson)', 'Mattia Zanrosso  909945'], 9, WHITE, MONO, spacing=1.3)
+T(s, 14.2, 15.2, 10, 1.6, ['Corporate Finance and', 'Financial Institutions 2'], 9, WHITE, MONO, spacing=1.3)
+T(s, 24.2, 15.2, 8, 1.6, ['Ca\' Foscari University', 'November 2026'], 9, WHITE, MONO, spacing=1.3)
 
-# 2 tesi
-s = slide('The strategy in one slide')
-card(s, 1.2, 4.3, 10.2, 12.5, 'What we buy', ['US large caps whose analysts are raising their earnings estimates', 'Zacks (1979): estimate revisions move prices most over one to three months, about the length of the game'], BLUE, 17)
-card(s, 11.8, 4.3, 10.2, 12.5, 'At what price', ['Median forward P/E of 13x, against 21.5x for the S&P 500', 'With the Fed raising rates we do not expect higher multiples, so prices have to follow earnings'], GOLD, 17)
-card(s, 22.4, 4.3, 10.2, 12.5, 'How we combine them', ['Value, growth and momentum stocks', '19 stocks in 7 sectors, at most 25% per sector', f'Weights by conviction, from {p.w.min():.1%} to {p.w.max():.1%}', 'Technology at 19%, beta close to 1'], GREEN, 17)
+# ================= 02 strategia =================
+s = slide(False, 'Strategy', '02', cubes=True)
+title(s, M, 2.9, 22, [[('The strategy in one slide', False)]], 34)
+cw = (33.867 - 2*M - 2*0.5) / 3
+card(s, M, 6.2, cw, 10.8, 'grad', 'What\nwe buy', 'US large caps whose analysts are raising their earnings estimates. Zacks (1979): revisions move prices most over one to three months.', '01')
+card(s, M + cw + 0.5, 6.2, cw, 10.8, 'black', 'At what\nprice', 'Median forward P/E of 13x, against 21.5x for the S&P 500. With the Fed raising rates, prices have to follow earnings.', '02')
+card(s, M + 2*(cw + 0.5), 6.2, cw, 10.8, 'white', 'How we\ncombine them', f'Value, growth and momentum stocks. 19 holdings in 7 sectors, at most 25% each. Weights by conviction, {p.w.min():.1%} to {p.w.max():.1%}.', '03')
 
-# 3 macro
-s = slide('The economic environment (November 2026)', 'What we expect for the next weeks and how it shaped the portfolio')
-items = [('Fed raising rates', 'First hike in three years in September, and officials signal more. The 10-year Treasury yields about 4.9%.', RED),
-         ('Inflation', 'Producer prices are rising at the fastest pace since 2022. 47% of fund managers expect stagflation.', RED),
-         ('Oil', 'Brent went above $110 in October because of the conflict between the US and Iran. It now moves with news on talks.', GOLD),
-         ('AI and chip stocks', 'Tech stocks lost more than $1 trillion of value in one week of October, and chip stocks keep falling.', GOLD),
-         ('Valuations', 'The S&P 500 is up about 8% this year and trades at 21.5 times forward earnings.', BLUE),
-         ('What we do', 'Buy rising estimates at low multiples, mix styles and sectors, and hold energy against an oil shock.', GREEN)]
-for i, (h, b, c) in enumerate(items): card(s, 1.2 + (i % 3)*10.6, 4.4 + (i // 3)*6.6, 10.2, 6.2, h, b, c, 16)
+# ================= 03 macro =================
+s = slide(True, 'Market', '03')
+title(s, M, 2.9, 13.5, [[('Where the', False)], [('market stands', True)], [('in November 2026', False)]], 36, True)
+T(s, M, 14.6, 12.5, 2.6, 'What we do about it: buy rising estimates at low multiples, mix styles and sectors, and hold energy against an oil shock.', 10, WHITE, MONO, spacing=1.15)
+items = [('Fed raising rates', 'First hike in three years in September; officials signal more. 10-year Treasury at about 4.9%.'),
+         ('Inflation', 'Producer prices rise at the fastest pace since 2022. 47% of fund managers expect stagflation.'),
+         ('Oil', 'Brent above $110 in October because of the US and Iran conflict; now moving with news on talks.'),
+         ('AI and chip stocks', 'More than $1 trillion of tech value lost in one week of October; chip stocks still falling.'),
+         ('Valuations', 'S&P 500 up about 8% this year, at 21.5 times forward earnings.')]
+x0, w0, h0 = 17.2, 33.867 - M - 17.2, 2.72
+for i, (h_, b_) in enumerate(items):
+    y_ = 2.9 + i * (h0 + 0.25); rect(s, x0, y_, w0, h0, RGBColor(0x0B,0x15,0x22), RGBColor(0xFF,0xFF,0xFF), 0.08, a=0.5, la=0.16)
+    T(s, x0 + 0.55, y_ + 0.35, 8, 0.4, f'{i+1:02d}', 7.5, MUTED_D, MONO)
+    T(s, x0 + 0.55, y_ + 0.85, w0 - 1.1, 0.7, h_, 15, WHITE, HEAD)
+    T(s, x0 + 0.55, y_ + 1.6, w0 - 1.1, 1, b_, 8.5, MUTED_D, MONO, spacing=1.05)
 
-# 4 metodo
-s = slide('Methodology: rebuilding the Zacks Rank', 'Revision score computed for 151 US large caps')
-crit = [('Agreement, 40%', 'Share of upward EPS revisions in the last 30 days. Zacks weighs this criterion most'), ('Magnitude, 25%', 'Change of the consensus EPS estimate over 60 days'),
-        ('Broker opinion, 20%', 'Average Broker Recommendation (ABR, 1 = Strong Buy)'), ('Upside, 15%', 'Analysts\' price target vs current price'),
-        ('Surprise, used as a check', 'Average EPS surprise over the last 4 quarters')]
-for i, (h, b) in enumerate(crit): card(s, 1.2, 4.3 + i*2.6, 15.5, 2.4, h, b, BLUE, 11)
-fun = [('151', 'large caps screened'), ('38', 'candidates with positive revisions and ABR ≤ 2.5'), ('19', 'stocks in the portfolio'), ('25', 'stocks in the watch list')]
+# ================= 04 metodo =================
+s = slide(False, 'Method', '04', cubes=True)
+title(s, M, 2.9, 20, [[('Rebuilding the ', False), ('Zacks Rank', True)], [('for 151 US large caps', False)]], 32)
+crit = [('40%', 'Agreement', 'Share of upward EPS revisions in the last 30 days; Zacks weighs it most'), ('25%', 'Magnitude', 'Change in the consensus EPS estimate over 60 days'),
+        ('20%', 'Broker opinion', 'Average Broker Recommendation, 1 = Strong Buy'), ('15%', 'Upside', 'Analysts\' price target against the current price'), ('Check', 'Surprise', 'Average EPS surprise over the last four quarters')]
+for i, (wgt, h_, b_) in enumerate(crit):
+    y_ = 7.0 + i * 2.1; rect(s, M, y_, 17.6, 1.85, RGBColor(0xFA,0xFB,0xFD), None, 0.12)
+    T(s, M + 0.55, y_ + 0.38, 2.6, 1, wgt, 20 if wgt != 'Check' else 14, ACC_L, HEAD, anchor=MSO_ANCHOR.MIDDLE)
+    T(s, M + 3.5, y_ + 0.3, 13.5, 0.6, h_, 13, INK, HEAD); T(s, M + 3.5, y_ + 1.0, 13.5, 0.6, b_, 8.5, INK2, MONO)
+fun = [('151', 'large caps screened'), ('38', 'candidates: positive revisions, ABR 2.5 or better'), ('19', 'stocks in the portfolio'), ('25', 'stocks in the watch list')]
 for i, (v, l) in enumerate(fun):
-    w = 14 - i*2; x = 17.5 + (15 - w)/2; b = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Cm(x), Cm(4.4 + i*3.3), Cm(w), Cm(2.9)); b.fill.solid(); b.fill.fore_color.rgb = [NAVY, BLUE, GREEN, GOLD][i]; b.line.fill.background()
-    tx(s, x, 4.5 + i*3.3, w, 2.8, [v, l], 13, True, RGBColor(255,255,255), PP_ALIGN.CENTER, MSO_ANCHOR.MIDDLE)
-tx(s, 1.2, 17.15, 31, 0.8, 'Score = 0.40·z(Agreement) + 0.25·z(Magnitude) + 0.20·z(−ABR) + 0.15·z(Upside). The signal works over a short horizon and favours smaller companies and fashionable industries.', 10, color=GREY)
+    x_ = 20.4 + (i % 2) * 5.85; y_ = 7.0 + (i // 2) * 5.2
+    rect(s, x_, y_, 5.55, 4.95, BLACK if i == 2 else RGBColor(0xFA,0xFB,0xFD), None, 0.07)
+    T(s, x_ + 0.5, y_ + 0.6, 4.6, 1.6, v, 36, WHITE if i == 2 else INK, HEAD)
+    T(s, x_ + 0.5, y_ + 3.3, 4.6, 1.4, l, 8.5, MUTED_D if i == 2 else INK2, MONO, spacing=1.05)
+T(s, M, 17.4, 30, 0.4, 'Score = 0.40 z(Agreement) + 0.25 z(Magnitude) + 0.20 z(-ABR) + 0.15 z(Upside). The signal works over a short horizon and favours smaller companies and fashionable industries.', 7, INK2, MONO)
 
-# 5 regole di stile
-s = slide('Screening rules by investment style')
-card(s, 1.2, 4.0, 10.2, 8.2, 'Value  (44%)', ['Forward P/E < 14', 'P/B < 3.5', 'Energy, banks, managed care, steel, telecom', 'Gain from oil prices and higher rates'], BLUE, 16)
-card(s, 11.8, 4.0, 10.2, 8.2, 'Growth at a reasonable price  (40%)', ['EPS growth > 25%', 'PEG < 1.6', 'AI hardware, grid infrastructure, asset management', 'Earnings already growing'], GOLD, 16)
-card(s, 22.4, 4.0, 10.2, 8.2, 'Momentum  (16%)', ['6-month return > 20%', '3-month return > 5%', 'Healthcare leaders and payments', 'Rising prices and rising estimates'], GREEN, 16)
-card(s, 1.2, 12.7, 31.4, 4.6, 'Portfolio constraints', [f'At most 25% per sector and three technology stocks. 19 stocks (the rules allow 10 to 30). {INV:.1%} invested after the first purchase (minimum 95%). No utilities, real estate or consumer discretionary, which suffer most from higher rates and weak spending.'], NAVY, 13)
+# ================= 05 regole =================
+s = slide(True, 'Screening', '05', bgimg='assets/bg_dark2.png')
+title(s, M, 2.9, 24, [[('Three styles, ', False), ('one screen', True)]], 34, True)
+sty = p.groupby('stile').w.sum()
+rules = [('Value', f'{sty["Value"]:.0%}', ['Forward P/E below 14', 'P/B below 3.5'], 'Oil, banks, health insurers, steel, telecom. They gain from oil prices and higher rates.'),
+         ('Growth', f'{sty["Growth"]:.0%}', ['EPS growth above 25%', 'PEG below 1.6'], 'AI hardware, grid contractors, asset management. Earnings already growing.'),
+         ('Momentum', f'{sty["Momentum"]:.0%}', ['6-month return above 20%', '3-month return above 5%'], 'Healthcare leaders and payments. Rising prices and rising estimates.')]
+for i, (n_, pct, rl, d_) in enumerate(rules):
+    x_ = M + i * (cw + 0.5); rect(s, x_, 5.6, cw, 8.6, RGBColor(0x0B,0x15,0x22), RGBColor(0xFF,0xFF,0xFF), 0.05, a=0.45, la=0.16)
+    T(s, x_ + 0.6, 6.1, cw - 1.2, 0.5, f'{i+1:02d}  /  share of portfolio', 7.5, MUTED_D, MONO)
+    T(s, x_ + 0.6, 6.9, cw - 1.2, 1.8, pct, 40, ACC_D, HEAD); T(s, x_ + 0.6, 8.9, cw - 1.2, 0.8, n_, 20, WHITE, HEAD)
+    T(s, x_ + 0.6, 10.3, cw - 1.2, 1.2, rl, 9.5, WHITE, MONO, spacing=1.2)
+    T(s, x_ + 0.6, 12.0, cw - 1.2, 1.8, d_, 8.5, MUTED_D, MONO, spacing=1.1)
+rect(s, M, 14.8, 33.867 - 2*M, 2.5, BLACK, None, 0.12, a=0.55)
+T(s, M + 0.6, 15.25, 30, 0.4, 'Portfolio constraints', 7.5, MUTED_D, MONO)
+T(s, M + 0.6, 15.85, 29.5, 1.2, f'At most 25% per sector and three technology stocks. 19 holdings (rules allow 10 to 30). {INV:.1%} invested after the first purchase (minimum 95%). No utilities, real estate or consumer discretionary, which suffer most from higher rates and weak spending.', 9.5, WHITE, MONO, spacing=1.15)
 
-# 6 portafoglio
-s = slide('The initial portfolio'); tx(s, 22, 2.75, 11, 0.5, 'Market orders executed on 24/11/2026 at the prices shown in the Excel file', 9, color=GREY, align=PP_ALIGN.RIGHT)
-rows = [['Ticker', 'Company', 'Sector', 'Style', 'Shares', 'Weight']] + [[r.ticker, r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corp.')[:28], SHORT.get(r.settore, r.settore), r.stile, f'{r.azioni:,}', f'{r.w:.1%}'] for _, r in p.sort_values('w', ascending=False).iterrows()]
-t = s.shapes.add_table(len(rows), 6, Cm(1.2), Cm(3.4), Cm(31.4), Cm(14.0)).table
-for j, wdt in enumerate([3, 10, 6.4, 4.5, 3.5, 4]): t.columns[j].width = Cm(wdt)
+# ================= 06 portafoglio =================
+s = slide(False, 'Portfolio', '06')
+title(s, M, 2.9, 20, [[('The initial portfolio', False)]], 30)
+T(s, 33.867 - M - 12, 3.35, 12, 0.5, 'Market orders executed 24/11/2026, fill prices', 8, INK2, MONO, PP_ALIGN.RIGHT)
+cols = ['Ticker', 'Company', 'Sector', 'Style', 'Shares', 'Fill price', 'Weight']; cwid = [2.4, 9.0, 5.6, 3.6, 2.8, 3.6, 3.07]
+rows = [[r.ticker, r.nome.replace('ExxonMobil Holdings Corporation', 'Exxon Mobil Corporation')[:34], SHORT.get(r.settore, r.settore), r.stile, f'{r.azioni:,}', f'${r.prezzo_acquisto:,.2f}', f'{r.w:.1%}'] for _, r in p.sort_values('w', ascending=False).iterrows()]
+y_ = 5.0; rh = 0.6
+xs = np.cumsum([M] + cwid)
+for j, c in enumerate(cols): T(s, xs[j] + 0.25, y_, cwid[j] - 0.5, 0.4, c, 7.5, INK2, MONO, PP_ALIGN.RIGHT if j >= 4 else PP_ALIGN.LEFT)
+rect(s, M, y_ + 0.55, sum(cwid), 0.02, INK2, None, shape=MSO_SHAPE.RECTANGLE)
 for i, row in enumerate(rows):
-    for j, v in enumerate(row):
-        c = t.cell(i, j); c.text = v; para = c.text_frame.paragraphs[0]; para.runs[0].font.size = Pt(10.5); para.runs[0].font.bold = i == 0
-        if j >= 4: para.alignment = PP_ALIGN.RIGHT
-        c.margin_top = c.margin_bottom = Cm(0.02)
-        if i == 0: c.fill.solid(); c.fill.fore_color.rgb = NAVY
-        else: c.fill.solid(); c.fill.fore_color.rgb = RGBColor(0xEE,0xF2,0xF8) if i % 2 else RGBColor(255,255,255); para.runs[0].font.color.rgb = RGBColor(0x26,0x26,0x26)
-    t.rows[i].height = Cm(0.69)
+    yy = y_ + 0.72 + i * rh
+    if i % 2 == 0: rect(s, M, yy - 0.06, sum(cwid), rh, RGBColor(0xFA,0xFB,0xFD), None, shape=MSO_SHAPE.RECTANGLE)
+    for j, v in enumerate(row): T(s, xs[j] + 0.25, yy + 0.06, cwid[j] - 0.5, 0.45, v, 9, INK if j != 0 else ACC_L, MONO if j in (0, 4, 5, 6) else BODY, PP_ALIGN.RIGHT if j >= 4 else PP_ALIGN.LEFT, bold=(j == 0))
+yy = y_ + 0.72 + len(rows) * rh + 0.1
+rect(s, M, yy, sum(cwid), 0.02, INK2, None, shape=MSO_SHAPE.RECTANGLE)
+T(s, M + 0.25, yy + 0.15, 20, 0.45, f'Total invested ${p.cv.sum():,.0f} of $1,000,000  /  cash {1-INV:.1%}', 8.5, INK, MONO)
+T(s, xs[6] + 0.25, yy + 0.15, cwid[6] - 0.5, 0.45, f'{INV:.1%}', 8.5, INK, MONO, PP_ALIGN.RIGHT)
 
-# 7 allocazione
-s = slide('Diversification: sectors and styles')
-sec = p.groupby('settore').w.sum().sort_values(ascending=False); sty = p.groupby('stile').w.sum().reindex(['Value', 'Growth', 'Momentum'])
-for (ser, x, ttl, typ) in [(sec, 1.2, 'Weight by sector', XL_CHART_TYPE.BAR_CLUSTERED), (sty, 17.5, 'Weight by style', XL_CHART_TYPE.DOUGHNUT)]:
-    cd = CategoryChartData(); cd.categories = [SHORT.get(k, k) for k in ser.index]; cd.add_series('Weight', [round(v, 4) for v in ser.values])
-    ch = s.shapes.add_chart(typ, Cm(x), Cm(3.2), Cm(15.5), Cm(13.5), cd).chart; ch.has_title = True; ch.chart_title.text_frame.text = ttl
-    pl = ch.plots[0]; pl.has_data_labels = True; pl.data_labels.number_format = '0%'; pl.data_labels.number_format_is_linked = False; pl.data_labels.font.size = Pt(12)
-    if typ == XL_CHART_TYPE.BAR_CLUSTERED: ch.has_legend = False; ch.value_axis.visible = False; ch.category_axis.reverse_order = True; ch.value_axis.has_major_gridlines = False; pl.series[0].format.fill.solid(); pl.series[0].format.fill.fore_color.rgb = BLUE
-    else: ch.has_legend = True; ch.legend.position = XL_LEGEND_POSITION.BOTTOM; ch.legend.include_in_layout = False
-tx(s, 1.2, 16.9, 31, 1, 'Technology is 19% of the portfolio against about 33% of the S&P 500. Energy offsets an oil shock; healthcare holds up in a slowdown.', 12, color=NAVY)
+# ================= 07 diversificazione =================
+s = slide(False, 'Diversification', '07', cubes=True)
+title(s, M, 2.9, 20, [[('Seven sectors, ', False), ('none above 25%', True)]], 32)
+sec = p.groupby('settore').w.sum().sort_values(ascending=False); styw = p.groupby('stile').w.sum().reindex(['Value', 'Growth', 'Momentum'])
+rect(s, M, 6.0, 18.4, 11.4, RGBColor(0xFA,0xFB,0xFD), None, 0.04); rect(s, M + 18.9, 6.0, 33.867 - 2*M - 18.9, 11.4, BLACK, None, 0.04)
+T(s, M + 0.6, 6.5, 10, 0.4, 'Weight by sector', 7.5, INK2, MONO); T(s, M + 19.5, 6.5, 10, 0.4, 'Weight by style', 7.5, MUTED_D, MONO)
+for k, (nm, v) in enumerate(sec.items()):
+    yy = 7.4 + k * 1.38; T(s, M + 0.6, yy + 0.12, 4.6, 0.5, SHORT.get(nm, nm), 10, INK, BODY)
+    rect(s, M + 5.3, yy + 0.18, 10.5, 0.42, RGBColor(0xE2,0xE6,0xEE), None, 0.5)
+    rect(s, M + 5.3, yy + 0.18, max(0.42, 10.5 * v / 0.25), 0.42, ACC_L if k else INK, None, 0.5)
+    T(s, M + 16.1, yy + 0.12, 1.8, 0.5, f'{v:.0%}', 10, INK, MONO, PP_ALIGN.RIGHT)
+cd = CategoryChartData(); cd.categories = list(styw.index); cd.add_series('Weight', [round(v, 4) for v in styw.values])
+gf = s.shapes.add_chart(XL_CHART_TYPE.DOUGHNUT, Cm(M + 19.4), Cm(7.2), Cm(6.6), Cm(6.6), cd); ch = gf.chart
+ch.has_legend = False; ch.has_title = False; pl = ch.plots[0]
+for i, c in enumerate([RGBColor(0x9F,0xC6,0xE6), RGBColor(0x5E,0x80,0x9C), RGBColor(0xE8,0xEE,0xF3)]):
+    pt = pl.series[0].points[i]; pt.format.fill.solid(); pt.format.fill.fore_color.rgb = c; pt.format.line.color.rgb = BLACK
+for i, (nm, v) in enumerate(styw.items()):
+    yy = 7.6 + i * 2.0; rect(s, M + 26.6, yy + 0.18, 0.4, 0.4, [RGBColor(0x9F,0xC6,0xE6), RGBColor(0x5E,0x80,0x9C), RGBColor(0xE8,0xEE,0xF3)][i], None, 0.2)
+    T(s, M + 27.3, yy, 3, 0.6, nm, 11, WHITE, HEAD); T(s, M + 27.3, yy + 0.65, 3, 0.5, f'{v:.0%}', 9, MUTED_D, MONO)
+T(s, M + 19.5, 14.5, 10.5, 2.6, 'Technology is 19% of the portfolio against about 33% of the S&P 500. Energy offsets an oil shock; healthcare holds up in a slowdown.', 9, WHITE, MONO, spacing=1.15)
 
-# 8 parametri
-s = slide('Valuation and revision profile of the portfolio')
-kp = [(f'{p.PE_fwd.median():.1f}x', 'median forward P/E\n(S&P 500 ≈ 21.5x)'), (f'{p.PEG.median():.2f}', 'median PEG'), (f'{p.ABR.median():.2f}', 'median ABR\n(1 = Strong Buy)'),
-      (f'{(p.rev_su_30g.sum()/(p.rev_su_30g.sum()+p.rev_giu_30g.sum())):.0%}', 'of EPS revisions in the\nlast 30 days are upward'), (f'+{p["surprise_4q_%"].median():.1f}%', 'median EPS surprise\nlast 4 quarters')]
-for i, (v, l) in enumerate(kp): kpi(s, 1.2 + i*6.3, 4.5, 6.0, v, l)
-card(s, 1.2, 10.3, 31.4, 6.8, 'What the numbers say', ['Analysts raised estimates on almost every holding in the last month, the companies beat their last four earnings forecasts by a median of 9%, and we pay about 13 times expected earnings against 21.5 for the market.'], NAVY, 17)
+# ================= 08 profilo valutativo (bento) =================
+s = slide(False, 'Valuation', '08')
+title(s, M, 2.9, 22, [[('What we pay, ', False), ('what we get', True)]], 32)
+up = p.rev_su_30g.sum() / (p.rev_su_30g.sum() + p.rev_giu_30g.sum())
+k = [(f'{p.PE_fwd.median():.1f}x', 'median forward P/E', 'S&P 500 at 21.5x'), (f'{up:.0%}', 'of EPS revisions in the last 30 days are upward', None),
+     (f'{p.ABR.median():.2f}', 'median broker rating', '1 = Strong Buy'), (f'+{p["surprise_4q_%"].median():.1f}%', 'median EPS surprise, last four quarters', None)]
+pos = [(M, 6.0, 6.2, 5.4), (M, 11.9, 6.2, 5.5), (M + 18.1, 6.0, 6.0, 5.4), (M + 18.1, 11.9, 6.0, 5.5)]
+for (v, l, sub), (x_, y_, w_, h_) in zip(k, pos):
+    rect(s, x_, y_, w_, h_, RGBColor(0xFA,0xFB,0xFD), None, 0.06)
+    T(s, x_ + 0.55, y_ + 0.6, w_ - 1.1, 1.6, v, 34, INK, HEAD)
+    T(s, x_ + 0.55, y_ + h_ - 1.75, w_ - 1.1, 1.2, l, 8.5, INK2, MONO, spacing=1.05)
+    if sub: T(s, x_ + 0.55, y_ + 2.35, w_ - 1.1, 0.5, sub, 8, ACC_L, MONO)
+card(s, M + 6.6, 6.0, 11.1, 11.4, 'imgdark', 'Cheap and\nimproving', None, hsize=30)
+T(s, M + 7.15, 6.6, 10, 0.5, 'Portfolio profile', 7.5, WHITE, MONO)
+x_ = M + 24.5; w_ = 33.867 - M - x_
+rect(s, x_, 6.0, w_, 11.4, BLACK, None, 0.04)
+T(s, x_ + 0.55, 6.6, w_ - 1.1, 0.5, 'Reading', 7.5, MUTED_D, MONO)
+T(s, x_ + 0.55, 10.6, w_ - 1.1, 6, 'Analysts raised estimates on almost every holding in the last month, and the companies beat their recent forecasts. We pay about 13 times expected earnings for that.', 10, WHITE, HEAD, spacing=1.1)
 
-# 9 backtest
-s = slide('Back-test of the initial portfolio, July to October 2026', 'Same weights, daily dividend-adjusted closes, S&P 500 as the market')
-for i, (v, l, c) in enumerate([(f'{BT["hpr"]:+.1%}', 'portfolio holding-period return', GREEN), (f'{BT["spx"]:+.1%}', 'S&P 500 return', GREY), (f'{BT["sh"]:.2f}', 'portfolio Sharpe ratio (Rf = 4%)', GREEN), (f'{BT["shm"]:.2f}'.replace('-', '−'), 'S&P 500 Sharpe ratio', GREY), (f'{BT["beta"]:.2f}', 'portfolio beta against the S&P 500', NAVY), (f'{BT["corr"]:.2f}', 'average correlation between pairs of stocks', NAVY)]):
-    kpi(s, 1.2 + (i % 3)*10.6, 4.6 + (i // 3)*4.2, 10.2, v, l, c)
-card(s, 1.2, 13.3, 31.4, 4.2, 'Look-ahead bias', ['We chose the stocks with momentum and revisions measured in November, which partly reflect July to October. The back-test therefore overstates the strategy; the trading period from 24/11 to 18/12 is the real test.'], RED, 13)
+# ================= 09 back-test =================
+s = slide(True, 'Back-test', '09')
+title(s, M, 2.9, 22, [[('July to October 2026, ', False)], [('same weights', True)]], 34, True)
+T(s, 33.867 - M - 12, 5.0, 12, 0.5, 'Daily dividend-adjusted closes, S&P 500 as the market, risk-free rate 4%', 8, MUTED_D, MONO, PP_ALIGN.RIGHT)
+vals = [(f'{BT["hpr"]:+.1%}', 'portfolio holding-period return', True), (f'{BT["spx"]:+.1%}', 'S&P 500 holding-period return', False), (f'{BT["sh"]:.2f}', 'portfolio Sharpe ratio', True),
+        (f'{BT["shm"]:.2f}'.replace('-', '−'), 'S&P 500 Sharpe ratio', False), (f'{BT["beta"]:.2f}', 'portfolio beta', False), (f'{BT["corr"]:.2f}', 'average correlation between pairs of stocks', False)]
+gw = (33.867 - 2*M - 2*0.4) / 3
+for i, (v, l, hl) in enumerate(vals):
+    x_ = M + (i % 3) * (gw + 0.4); y_ = 6.6 + (i // 3) * 3.6
+    rect(s, x_, y_, gw, 3.3, RGBColor(0x0B,0x15,0x22), RGBColor(0xFF,0xFF,0xFF), 0.07, a=0.45, la=0.16)
+    T(s, x_ + 0.6, y_ + 0.45, gw - 1.2, 1.6, v, 32, ACC_D if hl else WHITE, HEAD); T(s, x_ + 0.6, y_ + 2.3, gw - 1.2, 0.6, l, 8.5, MUTED_D, MONO)
+rect(s, M, 14.15, 33.867 - 2*M, 3.2, BLACK, None, 0.08, a=0.6)
+T(s, M + 0.6, 14.6, 10, 0.4, 'Look-ahead bias', 7.5, ACC_D, MONO)
+T(s, M + 0.6, 15.2, 29.5, 1.8, 'We picked the stocks with momentum and revisions measured in November, which partly reflect July to October. The back-test therefore overstates the strategy; the trading period from 24/11 to 18/12 is the real test.', 9.5, WHITE, MONO, spacing=1.15)
 
-# 10 piano trading
-s = slide('Trading plan, 24 November to 18 December')
-card(s, 1.2, 4.0, 15.5, 13.3, 'Rules for our trades (at least 5)', ['Sell when estimates start to be cut (Agreement below 0) or the Zacks Rank falls to 4 or 5', 'Sell or reduce after a 10% fall that the market does not explain', 'Reduce any position above 10% of the portfolio', 'Replace it with the best-scoring watch-list stock of the same style', 'Spread trades over the period so their effect can be measured'], BLUE, 16)
-card(s, 17.1, 4.0, 15.5, 13.3, 'Watch list (25 stocks) and what would make us buy', ['Oil upside: OXY, COP, PSX', 'AI rebound: ANET, AMD, NVDA, AVGO, KLAC, TXN', 'Grid and power: GEV, ETN, CEG', 'Defensive health: CVS, CI, TMO, ISRG, HCA', 'Rates and insurance: AIG, MET, CB, TRV, plus V', 'Others: PH, RTX, ORLY'], GOLD, 16)
+# ================= 10 piano di trading =================
+s = slide(False, 'Trading plan', '10', cubes=True)
+title(s, M, 2.9, 20, [[('From 24 November', False)], [('to 18 December', True)]], 32)
+rules = [('Sell', 'when estimates start to be cut (Agreement below 0) or the Zacks Rank falls to 4 or 5'), ('Reduce', 'after a 10% fall that the market does not explain'),
+         ('Trim', 'any position above 10% of the portfolio'), ('Replace', 'with the best-scoring watch-list stock of the same style'), ('Spread', 'at least five trades over the period, so their effect can be measured')]
+for i, (h_, b_) in enumerate(rules):
+    y_ = 7.4 + i * 2.0; rect(s, M, y_, 16.6, 1.8, BLACK if i == 0 else RGBColor(0xFA,0xFB,0xFD), None, 0.12)
+    T(s, M + 0.55, y_ + 0.3, 3, 0.4, f'{i+1:02d} rule', 7, MUTED_D if i == 0 else INK2, MONO)
+    T(s, M + 0.55, y_ + 0.75, 3.4, 0.8, h_, 15, WHITE if i == 0 else INK, HEAD)
+    T(s, M + 4.3, y_ + 0.45, 11.8, 1.2, b_, 9, MUTED_D if i == 0 else INK2, MONO, anchor=MSO_ANCHOR.MIDDLE, spacing=1.05)
+x_ = M + 17.1; w_ = 33.867 - M - x_
+pic(s, 'assets/card_grad.png', x_, 7.4, w_, 9.8, rounded=0.04)
+T(s, x_ + 0.6, 7.95, w_ - 1.2, 0.4, 'Watch list, 25 stocks', 7.5, WHITE, MONO)
+wl = [('Oil upside', 'OXY  COP  PSX'), ('AI rebound', 'ANET  AMD  NVDA  AVGO  KLAC  TXN'), ('Grid and power', 'GEV  ETN  CEG'), ('Defensive health', 'CVS  CI  TMO  ISRG  HCA'), ('Rates and insurance', 'AIG  MET  CB  TRV  V'), ('Others', 'PH  RTX  ORLY')]
+for i, (h_, b_) in enumerate(wl):
+    yy = 9.0 + i * 1.32; T(s, x_ + 0.6, yy, 5.2, 0.6, h_, 11.5, WHITE, HEAD); T(s, x_ + 6.0, yy + 0.1, w_ - 6.6, 0.6, b_, 9, RGBColor(0xEE,0xF3,0xF7), MONO)
 
-# 11 rischi
-s = slide('Main risks and how we manage them')
-rk = [('Oil price collapse after a peace deal', 'Energy is 19% of the portfolio. Refiners depend less on crude prices, and we did not buy OXY or COP.'), ('More Fed hikes', 'Our multiples are low, banks earn more with higher rates, and we hold no utilities or REITs.'),
-      ('A deeper fall in AI and chip stocks', 'We hold three technology stocks (19%). MU cost about 3 times expected earnings.'), ('Policy risk for health insurers', 'Healthcare is capped at 25% and split between insurers, biotech, drug distribution and lab tools.'),
-      ('Model risk', 'Revisions are a short-term signal. We check them every week and rely on valuation and diversification too.')]
-for i, (h, b) in enumerate(rk): card(s, 1.2, 3.9 + i*2.8, 31.4, 2.6, h, b, [RED, RED, GOLD, GOLD, BLUE][i], 12)
+# ================= 11 rischi =================
+s = slide(True, 'Risks', '11', bgimg='assets/bg_dark2.png')
+title(s, M, 2.9, 12.5, [[('What could', False)], [('go wrong', True)]], 36, True)
+rk = [('Oil price collapse after a peace deal', 'Energy is 19% of the portfolio. Refiners depend less on crude prices, and we did not buy OXY or COP.'),
+      ('More Fed hikes', 'Our multiples are low, banks earn more with higher rates, and we hold no utilities or REITs.'),
+      ('A deeper fall in AI and chip stocks', 'Three technology stocks, 19% of the portfolio. MU cost about 3 times expected earnings.'),
+      ('Policy risk for health insurers', 'Healthcare capped at 25%, split between insurers, biotech, drug distribution and lab tools.'),
+      ('Model risk', 'Revisions are a short-term signal. We check them weekly and rely on valuation and diversification too.')]
+for i, (h_, b_) in enumerate(rk):
+    y_ = 2.9 + i * 2.97; rect(s, x0, y_, w0, 2.72, RGBColor(0x0B,0x15,0x22), RGBColor(0xFF,0xFF,0xFF), 0.08, a=0.5, la=0.16)
+    T(s, x0 + 0.55, y_ + 0.35, 8, 0.4, f'{i+1:02d}', 7.5, MUTED_D, MONO)
+    T(s, x0 + 0.55, y_ + 0.85, w0 - 1.1, 0.7, h_, 14, WHITE, HEAD)
+    T(s, x0 + 0.55, y_ + 1.6, w0 - 1.1, 1, b_, 8.5, MUTED_D, MONO, spacing=1.05)
 
-# 12 formule
-s = slide('Formulas used in the Excel analysis')
-fm = ['Daily return:  r(t) = (P(t) − P(t−1)) / P(t−1)', 'Portfolio return:  R(p,t) = Σ w(i)·r(i,t)', 'Geometric mean:  [Π(1 + r(t))]^(1/T) − 1;   HPR = Π(1 + r(t)) − 1',
-      'Risk:  sample variance VAR.S and standard deviation STDEV.S of returns', 'Beta:  β(i) = Cov(r(i), R(m)) / Var(R(m));   β(p) = Σ w(i)·β(i)',
-      'Sharpe:  (R(p,annual) − Rf) / σ(p,annual),  R(annual) = (1 + R(monthly))^12 − 1,  σ(annual) = σ(daily)·√250']
-for i, f_ in enumerate(fm): tx(s, 1.5, 4.0 + i*2.25, 31, 2, '•  ' + f_, 17, False, NAVY)
+# ================= 12 formule =================
+s = slide(False, 'Excel', '12')
+title(s, M, 2.9, 22, [[('The formulas ', False), ('behind the Excel', True)]], 32)
+fm = [('Daily return', 'r(t) = (P(t) − P(t−1)) / P(t−1)'), ('Portfolio return', 'R(p,t) = Σ w(i) · r(i,t)'), ('Geometric mean and HPR', '[Π(1 + r(t))]^(1/T) − 1     HPR = Π(1 + r(t)) − 1'),
+      ('Risk', 'sample variance VAR.S, standard deviation STDEV.S'), ('Beta', 'β(i) = Cov(r(i), R(m)) / Var(R(m))     β(p) = Σ w(i) · β(i)'), ('Sharpe ratio', '(R(annual) − Rf) / σ(annual)     R(annual) = (1 + R(monthly))^12 − 1     σ(annual) = σ(daily) · √250')]
+fw = (33.867 - 2*M - 0.5) / 2
+for i, (h_, f_) in enumerate(fm):
+    x_ = M + (i % 2) * (fw + 0.5); y_ = 6.0 + (i // 2) * 3.8
+    rect(s, x_, y_, fw, 3.5, BLACK if i == 5 else RGBColor(0xFA,0xFB,0xFD), None, 0.07)
+    T(s, x_ + 0.6, y_ + 0.5, fw - 1.2, 0.4, f'{i+1:02d}  /  {h_}', 7.5, MUTED_D if i == 5 else INK2, MONO)
+    T(s, x_ + 0.6, y_ + 1.4, fw - 1.2, 1.8, f_, 13 if i != 5 else 10.5, WHITE if i == 5 else INK, MONO, spacing=1.1)
 
 os.makedirs('out', exist_ok=True); prs.save('out/presentazione_strategia.pptx'); print('ok', len(prs.slides))
